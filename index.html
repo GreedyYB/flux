@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flux</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>FLUX</h1>
+    <h2>Lines of 4 (8x8)</h2>
+    
+    <div id="game-over-banner" class="game-over-banner">Game Over</div>
+    <div id="notification" class="notification"></div>
+    
+    <!-- Timer Setup Section -->
+    <div id="timer-setup" class="timer-setup">
+        <div class="timer-option-row">
+            <label for="use-timer" class="timer-option">
+                <input type="checkbox" id="use-timer" name="use-timer"> Use Timer
+            </label>
+        </div>
+        <div class="timer-option-row" id="timer-options" style="display: none;">
+            <div class="timer-option">
+                <label for="base-time">Base Time:</label>
+                <select id="base-time">
+                    <option value="60">60 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="15">15 minutes</option>
+                    <option value="10" selected>10 minutes</option>
+                    <option value="5">5 minutes</option>
+                    <option value="3">3 minutes</option>
+                </select>
+            </div>
+            <div class="timer-option">
+                <label for="increment">Increment:</label>
+                <select id="increment">
+                    <option value="0" selected>No increment</option>
+                    <option value="2">+2 seconds</option>
+                    <option value="5">+5 seconds</option>
+                    <option value="10">+10 seconds</option>
+                </select>
+            </div>
+        </div>
+        <button id="start-game" class="timer-button">Start Game</button>
+    </div>
+    
+    <!-- Game Info Section (with integrated timers and CORE) -->
+    <div class="game-info">
+        <div class="left-side">
+            <div id="white-timer" class="timer white-timer">
+                <div class="timer-label">White</div>
+                <div class="timer-value">10:00</div>
+            </div>
+            <div class="score white-score">White: <span id="white-score">0</span></div>
+        </div>
+        
+        <div class="center">
+            <div class="player-turn" id="player-turn">Current Turn: <span id="current-player">White</span></div>
+        </div>
+        
+        <div class="right-side">
+            <div class="score black-score">Black: <span id="black-score">0</span></div>
+            <div id="black-timer" class="timer black-timer">
+                <div class="timer-label">Black</div>
+                <div class="timer-value">10:00</div>
+            </div>
+        </div>
+        
+        <!-- CORE avatar moved outside the main flow -->
+        <div id="core-avatar" class="ai-avatar">
+            <div class="avatar-container">
+                <div class="core-orb">
+                    <div class="core-inner"></div>
+                    <div class="core-ring"></div>
+                </div>
+                <div class="thinking-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="avatar-name">CORE</div>
+            <div class="avatar-status">Standby</div>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <div class="game-board-section">
+            <div class="board-container">
+                <div class="board-with-labels">
+                    <div class="board-with-row-labels">
+                        <div class="row-labels" id="row-labels"></div>
+                        <div class="board" id="board"></div>
+                    </div>
+                    <div class="column-labels" id="column-labels"></div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="reset-button">Reset Game</button>
+                <button id="help-button">Rules</button>
+                <button id="terminate-button">Terminate</button>
+            </div>
+
+            <!-- Game mode selector -->
+            <div class="game-mode">
+                <label for="game-mode">Game Mode:</label>
+                <select id="game-mode">
+                    <option value="human">Play Against Human</option>
+                    <option value="ai">Play Against AI</option>
+                </select>
+            </div>
+
+            <!-- AI difficulty selector (initially hidden) -->
+            <div class="ai-difficulty" style="display: none;">
+                <label for="ai-difficulty">AI Difficulty:</label>
+                <select id="ai-difficulty">
+                    <option value="1">Level 1 (Easy)</option>
+                    <option value="2">Level 2 (Medium)</option>
+                    <option value="3" selected>Level 3 (Hard)</option>
+                    <option value="4">Level 4 (Expert)</option>
+                </select>
+            </div>
+            
+            <!-- Review Controls (hidden until game over) -->
+            <div id="review-controls" class="review-controls">
+                <div class="review-header">Game Review</div>
+                <div class="review-buttons">
+                    <button id="review-first">⏪</button>
+                    <button id="review-prev">◀</button>
+                    <button id="review-next">▶</button>
+                    <button id="review-last">⏩</button>
+                </div>
+                <div class="review-info">
+                    Move: <span id="review-move-counter">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-log-section">
+            <div class="messages" id="messages">
+                <h3>Game Log</h3>
+                <div id="messages-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="help-text">
+        <h3>How to Play Flux</h3>
+        <p>1. Players take turns placing white and black particles on the 8×8 board.</p>
+        <p>2. White always moves first.</p>
+        <p>3. The goal is to form Vectors (unbroken lines of exactly 4 particles of the same colour) horizontally, vertically, or diagonally.</p>
+        <p>4. You may not form lines of the same colour longer than 4 particles.</p>
+        <p>5. When a Vector is formed, the last particle placed becomes a Node. A Node will remain on the board for the rest of the game and cannot be removed. All other particles in the Vector are removed from the board (except for any existing Nodes).</p>
+        <p>6. Forming multiple Vectors at once creates more valuable Nodes:</p>
+        <ul>
+            <li>1 Vector = Standard Node (red dot)</li>
+            <li>2 Vectors at once = Double Node (red horizontal oval)</li>
+            <li>3 Vectors at once = Triple Node (red triangle)</li>
+            <li>4 Vectors at once = Quadruple Node (red diamond)</li>
+        </ul>
+        <p>7. <strong>Main Objective:</strong> Win by forming a Flux (a Vector of 4 Nodes)!</p>
+        <p>8. If no player can form a Flux and no more legal moves are possible by either player, the player with the most Nodes wins. If both players have the same number of Nodes, the game is a draw.</p>
+        <p>9. A player may Terminate the game at any point, conceding the win to their opponent.</p>
+        <p>10. A timer is not required, but if selected, a player will lose the game if their clock expires.</p>
+        <p>11. <strong>Play Against AI:</strong> If you have no human companions, why not try a game against our AI expert, Cognitive Operational Reasoning Engine (CORE). Choose from easy to expert levels 1-6.</p>
+    </div>
+
+    <script src="flux.js"></script>
+    <script src="ai.js"></script>
+</body>
+</html>
