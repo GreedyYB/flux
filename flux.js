@@ -1653,7 +1653,7 @@ if (startGameButton) {
                 updateCoreStatus('Thinking...');
                 
                 // Random delay to simulate thinking
-                const thinkingDelay = 1500 + Math.floor(Math.random() * 1500);
+                const thinkingDelay = 3000 + Math.floor(Math.random() * 2000);
                 
                 setTimeout(() => {
                     try {
@@ -1855,8 +1855,8 @@ function gameLoop() {
             // Update CORE's status to thinking
             updateCoreStatus('Thinking...');
 
-            // Generate a random delay to simulate thinking
-            const thinkingDelay = 1500 + Math.floor(Math.random() * 1500);
+            // Generate a random delay between 3-5 seconds as requested
+const thinkingDelay = 3000 + Math.floor(Math.random() * 2000);
             
             // First, use a timeout to simulate "thinking" time
             setTimeout(() => {
