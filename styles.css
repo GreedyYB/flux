@@ -930,22 +930,12 @@ button:hover {
     }
   }
 
-  /* Improved Mobile Responsiveness - Add to end of your CSS file */
+  /* Improved Mobile Responsiveness - Replace the previous mobile styles with these */
 
-/* Base responsive styles - handle overall layout */
+/* Base responsive styles */
 @media screen and (max-width: 768px) {
     body {
       padding: 10px;
-    }
-    
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 5px;
-    }
-    
-    h2 {
-      font-size: 1rem;
-      margin-bottom: 10px;
     }
     
     /* Make the game container stack vertically */
@@ -955,113 +945,50 @@ button:hover {
       width: 100%;
     }
     
-    /* Adjust game board section to take full width */
-    .game-board-section {
-      width: 100%;
-      order: 1;
-    }
-    
-    /* Position game log below the board */
-    .game-log-section {
-      width: 100%;
-      order: 2;
-    }
-    
-    /* Make the messages container shorter on mobile */
-    .messages {
-      height: 250px;
-    }
-    
-    /* Make the game info more compact */
+    /* Keep game info in a horizontal row */
     .game-info {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
       width: 100%;
       max-width: 100%;
-      gap: 10px;
-      justify-content: space-between;
       margin-bottom: 15px;
     }
     
-    /* Adjust timers to fit mobile layout */
-    .timer {
-      width: auto;
-      min-width: 60px;
-    }
-    
-    /* Adjust score display sizes */
-    .score {
-      padding: 5px 10px;
-      min-height: auto;
-    }
-    
-    /* Adjust CORE avatar size and position */
-    #core-avatar {
-      width: auto;
-      height: auto;
-      position: relative;
-      left: auto;
-      transform: none;
-      margin: 10px auto;
+    .left-side, .right-side {
       display: flex;
-    }
-    
-    /* Adjust controls spacing */
-    .controls button {
-      padding: 8px 12px;
-      margin: 5px;
-      font-size: 0.9rem;
-    }
-    
-    /* Game mode and AI difficulty selectors */
-    .game-mode, .ai-difficulty {
-      flex-direction: column;
-      padding: 8px;
-      gap: 5px;
-    }
-    
-    .game-mode label, .ai-difficulty label {
-      margin-right: 0;
-      margin-bottom: 5px;
-    }
-    
-    /* Timer setup adjustments */
-    .timer-setup {
-      width: 90%;
-      padding: 10px;
-    }
-    
-    .timer-option-row {
-      flex-direction: column;
       align-items: center;
+      gap: 8px;
     }
     
-    .timer-option {
-      margin: 5px 0;
+    /* Make the board a perfect square */
+    .board-container {
+      width: 100%;
+      margin: 0 auto;
+      max-width: 90vmin; /* Use viewport minimum for sizing */
     }
-  }
-  
-  /* Small phone screens - adjust the game board */
-  @media screen and (max-width: 480px) {
-    /* Make the board responsive */
+    
     .board {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1/1; /* Keep it perfectly square */
       display: grid;
       grid-template-columns: repeat(8, 1fr);
       grid-template-rows: repeat(8, 1fr);
-      gap: 1px;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 1/1; /* Keep it square */
+      gap: 2px;
     }
     
-    /* Make cells responsive squares */
+    /* Make cells square */
     .cell {
       width: auto;
       height: 0;
-      padding-bottom: 100%; /* Makes cells square */
+      padding-bottom: 100%; /* Makes each cell a square */
       position: relative;
-      font-size: 9px;
+      font-size: 10px;
     }
     
-    /* Reposition ions inside responsive cells */
+    /* Position ions properly in the responsive cells */
     .ion {
       position: absolute;
       width: 80%;
@@ -1072,55 +999,95 @@ button:hover {
     
     /* Adjust row and column labels */
     .row-label {
-      height: auto;
+      height: 0;
       padding-bottom: 100%;
-      width: 20px;
+      width: 25px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 12px;
     }
     
     .column-label {
       width: auto;
-      font-size: 10px;
+      font-size: 12px;
     }
     
-    /* Smaller buttons with less padding */
+    /* Position game log section below board */
+    .game-log-section {
+      width: 100%;
+    }
+    
+    /* Make the messages container shorter on mobile */
+    .messages {
+      height: 200px;
+    }
+    
+    /* Adjust controls buttons */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .controls button {
+      padding: 8px 12px;
+      margin: 5px;
+      font-size: 0.9rem;
+    }
+  
+    /* Center CORE avatar */
+    #core-avatar {
+      position: relative;
+      left: auto;
+      transform: none;
+      margin: 0 auto;
+      display: flex;
+    }
+    
+    /* Adjust score display sizes */
+    .score {
+      padding: 6px 10px;
+      min-height: auto;
+      font-size: 0.9rem;
+    }
+    
+    /* Make timer display compact but readable */
+    .timer {
+      min-width: 70px;
+      padding: 6px;
+    }
+    
+    /* Timer setup adjustments */
+    .timer-setup {
+      width: 100%;
+      max-width: none;
+      padding: 10px;
+    }
+  }
+  
+  /* Small phone screens - extra adjustments */
+  @media screen and (max-width: 480px) {
+    /* Further adjust controls for very small screens */
     .controls button {
       padding: 6px 10px;
       font-size: 0.8rem;
       margin: 3px;
     }
     
-    /* Make node markers properly scaled */
-    .protection-1:after,
-    .protection-2:after,
-    .protection-3:after,
-    .protection-4:after {
-      transform: translate(-50%, -50%) scale(0.8);
+    /* Make score and timer text slightly smaller */
+    .score, .timer-value {
+      font-size: 0.85rem;
     }
     
-    /* Review controls adjustments */
-    .review-controls {
-      width: 90%;
+    /* Make the timer labels more compact */
+    .timer-label {
+      font-size: 0.75rem;
     }
     
-    .review-buttons button {
-      width: 30px;
-      height: 30px;
-      font-size: 14px;
-    }
-    
-    /* Stack the game info elements vertically on very small screens */
+    /* Ensure small screens keep game info in a row */
     .game-info {
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .left-side, .right-side {
-      flex-direction: column;
-      width: 100%;
+      flex-wrap: nowrap;
       gap: 5px;
     }
   }
