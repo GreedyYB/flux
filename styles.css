@@ -1094,3 +1094,62 @@ button:hover {
     font-size: 9px;
   }
 }
+
+/* Add this to your CSS file to fix the cell label positioning */
+@media screen and (max-width: 768px) {
+    /* Fix the cell text positioning issue */
+    .cell {
+      width: 100%;
+      height: 0;
+      padding-bottom: 100%;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 10px;
+      color: #ccc;
+    }
+  
+    /* Remove all content from pseudo-elements */
+    .cell::before, .cell::after {
+      content: none !important;
+    }
+  
+    /* Create a wrapper for cell content to position it absolutely centered */
+    .cell-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+  
+    /* Ensure CORE header is hidden by default */
+    #core-avatar-header {
+      display: none;
+    }
+  
+    /* Only show CORE header in AI mode */
+    .ai-mode #core-avatar-header {
+      display: flex;
+    }
+  }
+
+  /* Ensure CORE header is hidden by default (add to your CSS) */
+#core-avatar-header {
+    display: none !important; /* Use !important to override any other styles */
+}
+
+/* Only show CORE header in AI mode */
+.ai-mode #core-avatar-header {
+    display: flex !important;
+}
+
+/* Ensure CORE in game info area is also properly hidden until AI mode */
+#core-avatar {
+    display: none !important;
+}
+
+.ai-mode #core-avatar {
+    display: flex !important;
+}

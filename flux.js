@@ -201,56 +201,115 @@ document.addEventListener('DOMContentLoaded', function() {
         return linesInfo.linesFormed > 0;
     }
 
-    // Initialize board
-    function initializeBoard() {
-        // Create column labels (A-H)
-        columnLabelsElement.innerHTML = '';
+    // Update the initializeBoard function to create cells with properly centered content
+function initializeBoard() {
+    // Create column labels (A-H)
+    columnLabelsElement.innerHTML = '';
+    for (let col = 0; col < BOARD_SIZE; col++) {
+        const label = document.createElement('div');
+        label.className = 'column-label';
+        label.textContent = String.fromCharCode(65 + col);
+        columnLabelsElement.appendChild(label);
+    }
+    
+    // Create row labels (8-1)
+    rowLabelsElement.innerHTML = '';
+    for (let row = 0; row < BOARD_SIZE; row++) {
+        const label = document.createElement('div');
+        label.className = 'row-label';
+        label.textContent = BOARD_SIZE - row;
+        rowLabelsElement.appendChild(label);
+    }
+    
+    // Create cells
+    boardElement.innerHTML = '';
+    
+    // Create container for vector lines
+    const lineContainer = document.createElement('div');
+    lineContainer.className = 'vector-line-container';
+    boardElement.appendChild(lineContainer);
+    
+    for (let row = 0; row < BOARD_SIZE; row++) {
         for (let col = 0; col < BOARD_SIZE; col++) {
-            const label = document.createElement('div');
-            label.className = 'column-label';
-            label.textContent = String.fromCharCode(65 + col);
-            columnLabelsElement.appendChild(label);
-        }
-        
-        // Create row labels (8-1)
-        rowLabelsElement.innerHTML = '';
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            const label = document.createElement('div');
-            label.className = 'row-label';
-            label.textContent = BOARD_SIZE - row;
-            rowLabelsElement.appendChild(label);
-        }
-        
-        // Create cells
-        boardElement.innerHTML = '';
-        
-        // Create container for vector lines
-        const lineContainer = document.createElement('div');
-        lineContainer.className = 'vector-line-container';
-        boardElement.appendChild(lineContainer);
-        
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.row = row;
-                cell.dataset.col = col;
-                cell.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
-                cell.addEventListener('click', () => handleCellClick(row, col));
-                boardElement.appendChild(cell);
-            }
-        }
-
-        // Set initial active player indicator ONLY if game is in progress
-        if (state.gameStarted && !state.gameOver) {
-            document.querySelector('.white-score').classList.add('active-player');
-            document.querySelector('.black-score').classList.remove('active-player');
-        } else {
-            // Remove active player styling when not in active game
-            document.querySelector('.white-score').classList.remove('active-player');
-            document.querySelector('.black-score').classList.remove('active-player');
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+            
+            // Create a centered content wrapper
+            const cellContent = document.createElement('div');
+            cellContent.className = 'cell-content';
+            cellContent.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
+            cell.appendChild(cellContent);
+            
+            cell.addEventListener('click', () => handleCellClick(row, col));
+            boardElement.appendChild(cell);
         }
     }
+
+    // Set initial active player indicator ONLY if game is in progress
+    if (state.gameStarted && !state.gameOver) {
+        document.querySelector('.white-score').classList.add('active-player');
+        document.querySelector('.black-score').classList.remove('active-player');
+    } else {
+        // Remove active player styling when not in active game
+        document.querySelector('.white-score').classList.remove('active-player');
+        document.querySelector('.black-score').classList.remove('active-player');
+    }
+}
+
+// Update the updateBoard function to create cells with properly centered content
+function updateBoard() {
+    for (let row = 0; row < BOARD_SIZE; row++) {
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            if (!cell) continue;
+            
+            const pieceData = state.board[row][col];
+            
+            // Clear any previous highlights
+            cell.classList.remove('last-move');
+            
+            // Highlight last move
+            if (state.lastMove && state.lastMove.row === row && state.lastMove.col === col) {
+                cell.classList.add('last-move');
+            }
+            
+            // Clear cell
+            cell.innerHTML = '';
+            
+            if (pieceData) {
+                // Create ion
+                const ion = document.createElement('div');
+                ion.className = `ion ${pieceData.color}-ion`;
+                
+                // Add protection level if needed
+                if (pieceData.protectionLevel > 0) {
+                    ion.classList.add(`protection-${pieceData.protectionLevel}`);
+                }
+                
+                cell.appendChild(ion);
+            } else {
+                // Show coordinates if no piece, with proper centering
+                const cellContent = document.createElement('div');
+                cellContent.className = 'cell-content';
+                cellContent.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
+                cell.appendChild(cellContent);
+            }
+        }
+    }
+    
+    // Ensure vector line container exists
+    let lineContainer = boardElement.querySelector('.vector-line-container');
+    if (!lineContainer) {
+        lineContainer = document.createElement('div');
+        lineContainer.className = 'vector-line-container';
+        boardElement.appendChild(lineContainer);
+    }
+    
+    // Update scores display
+    updateScores();
+}
 
     // Update scores display
     function updateScores() {
