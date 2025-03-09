@@ -1477,6 +1477,7 @@ function updateBoard() {
             updateAIDifficultyVisibility(gameModeSelect.value);
             updateGameModeClass(gameModeSelect.value);
         }
+        document.body.classList.remove('game-started');
     }
     
     // Review mode functions
@@ -1668,6 +1669,9 @@ function updateBoard() {
             if (state.gameStarted && !state.gameOver) {
                 document.querySelector('.white-score').classList.add('active-player');
                 document.querySelector('.black-score').classList.remove('active-player');
+                
+                // ADD THIS LINE to add game-started class to body
+                document.body.classList.add('game-started');
             }
         });
     }

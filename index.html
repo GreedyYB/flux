@@ -8,95 +8,78 @@
 </head>
 <body>
     <h1>FLUX</h1>
-
-    <div id="core-avatar-header" class="ai-avatar in-header">
-        <div class="avatar-container">
-            <div class="core-orb">
-                <div class="core-inner"></div>
-                <div class="core-ring"></div>
-            </div>
-            <div class="thinking-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-        <div class="avatar-name">CORE</div>
-        <div class="avatar-status">Standby</div>
-    </div>
     
     <div id="game-over-banner" class="game-over-banner">Game Over</div>
     <div id="notification" class="notification"></div>
     
-    <!-- Timer Setup Section -->
-    <div id="timer-setup" class="timer-setup">
-        <div class="timer-option-row">
-            <label for="use-timer" class="timer-option">
-                <input type="checkbox" id="use-timer" name="use-timer"> Use Timer
-            </label>
-        </div>
-        <div class="timer-option-row" id="timer-options" style="display: none;">
-            <div class="timer-option">
-                <label for="base-time">Base Time:</label>
-                <select id="base-time">
-                    <option value="60">60 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="15">15 minutes</option>
-                    <option value="10" selected>10 minutes</option>
-                    <option value="5">5 minutes</option>
-                    <option value="3">3 minutes</option>
-                </select>
-            </div>
-            <div class="timer-option">
-                <label for="increment">Increment:</label>
-                <select id="increment">
-                    <option value="0" selected>No increment</option>
-                    <option value="2">+2 seconds</option>
-                    <option value="5">+5 seconds</option>
-                    <option value="10">+10 seconds</option>
-                </select>
-            </div>
-        </div>
-        <button id="start-game" class="timer-button">Start Game</button>
-    </div>
-    
-    <!-- Game Info Section (with integrated timers and CORE) -->
-    <div class="game-info">
-        <div class="left-side">
-            <div id="white-timer" class="timer white-timer">
-                <div class="timer-label">White</div>
-                <div class="timer-value">10:00</div>
-            </div>
-            <div class="score white-score">White: <span id="white-score">0</span></div>
-        </div>
-        
-        <div class="center">
-            <div class="player-turn" id="player-turn">Current Turn: <span id="current-player">White</span></div>
-        </div>
-        
-        <div class="right-side">
-            <div class="score black-score">Black: <span id="black-score">0</span></div>
-            <div id="black-timer" class="timer black-timer">
-                <div class="timer-label">Black</div>
-                <div class="timer-value">10:00</div>
-            </div>
-        </div>
-        
-        <!-- CORE avatar moved outside the main flow -->
-        <div id="core-avatar" class="ai-avatar">
-            <div class="avatar-container">
-                <div class="core-orb">
-                    <div class="core-inner"></div>
-                    <div class="core-ring"></div>
+    <!-- Fixed-height container for game info and timer setup -->
+    <div class="header-area">
+        <!-- Game Info Section -->
+        <div class="game-info">
+            <div class="left-side">
+                <div id="white-timer" class="timer white-timer">
+                    <div class="timer-label">White</div>
+                    <div class="timer-value">10:00</div>
                 </div>
-                <div class="thinking-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                <div class="score white-score">White: <span id="white-score">0</span></div>
+            </div>
+            
+            <!-- CORE avatar centered under FLUX -->
+            <div id="core-avatar" class="ai-avatar">
+                <div class="avatar-container">
+                    <div class="core-orb">
+                        <div class="core-inner"></div>
+                        <div class="core-ring"></div>
+                    </div>
+                    <div class="thinking-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+                <div class="avatar-name">CORE</div>
+                <div class="avatar-status">Standby</div>
+            </div>
+            
+            <div class="right-side">
+                <div class="score black-score">Black: <span id="black-score">0</span></div>
+                <div id="black-timer" class="timer black-timer">
+                    <div class="timer-label">Black</div>
+                    <div class="timer-value">10:00</div>
                 </div>
             </div>
-            <div class="avatar-name">CORE</div>
-            <div class="avatar-status">Standby</div>
+        </div>
+        
+        <!-- Timer Setup Section - centered below FLUX -->
+        <div id="timer-setup" class="timer-setup">
+            <div class="timer-option-row">
+                <label for="use-timer" class="timer-option">
+                    <input type="checkbox" id="use-timer" name="use-timer"> Use Timer
+                </label>
+            </div>
+            <div class="timer-option-row" id="timer-options" style="display: none;">
+                <div class="timer-option">
+                    <label for="base-time">Base:</label>
+                    <select id="base-time">
+                        <option value="60">60m</option>
+                        <option value="30">30m</option>
+                        <option value="15">15m</option>
+                        <option value="10" selected>10m</option>
+                        <option value="5">5m</option>
+                        <option value="3">3m</option>
+                    </select>
+                </div>
+                <div class="timer-option">
+                    <label for="increment">+</label>
+                    <select id="increment">
+                        <option value="0" selected>0s</option>
+                        <option value="2">2s</option>
+                        <option value="5">5s</option>
+                        <option value="10">10s</option>
+                    </select>
+                </div>
+            </div>
+            <button id="start-game" class="timer-button">Start</button>
         </div>
     </div>
     
