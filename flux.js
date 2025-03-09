@@ -105,16 +105,28 @@ function updateAIDifficultyVisibility(gameMode) {
         return;
     }
 
+    // Function to control game mode class for displaying CORE in header
+function updateGameModeClass(gameMode) {
+    // Add or remove the ai-mode class from the body
+    if (gameMode === 'ai') {
+        document.body.classList.add('ai-mode');
+    } else {
+        document.body.classList.remove('ai-mode');
+    }
+}
+
     // Set up game mode change handler
 if (gameModeSelect && coreAvatar) {
     // Initial update based on selected mode
     updateCoreVisibility(gameModeSelect.value);
     updateAIDifficultyVisibility(gameModeSelect.value);
+    updateGameModeClass(gameModeSelect.value); // Add this line
     
     // Add event listener for changes
     gameModeSelect.addEventListener('change', function() {
         updateCoreVisibility(this.value);
         updateAIDifficultyVisibility(this.value);
+        updateGameModeClass(this.value); // Add this line
     });
 }
 
@@ -1768,4 +1780,37 @@ if (startGameButton) {
     
     // Call gameLoop() periodically to check for AI moves
     setInterval(gameLoop, 100); // Check for AI moves every 100ms
+
+    // Call gameLoop() periodically to check for AI moves
+setInterval(gameLoop, 100); // Check for AI moves every 100ms
+
+// Add this function to sync the header CORE avatar status with the main one
+function syncCoreAvatars() {
+    const mainCore = document.getElementById('core-avatar');
+    const headerCore = document.getElementById('core-avatar-header');
+    
+    if (!mainCore || !headerCore) return;
+    
+    // Function to sync status changes
+    const syncStatus = () => {
+        // ... rest of the function ...
+    };
+    
+    // Create a MutationObserver to watch for changes
+    const observer = new MutationObserver(syncStatus);
+    
+    // Start observing the main CORE avatar
+    observer.observe(mainCore, {
+        attributes: true,
+        childList: true,
+        subtree: true
+    });
+    
+    // Initial sync
+    syncStatus();
+}
+
+// Add sync for CORE avatars
+syncCoreAvatars();
+
 }); // <-- ADD THIS to close the document ready handler
