@@ -930,12 +930,12 @@ button:hover {
     }
   }
 
-  /* Improved Mobile Responsiveness - Replace the previous mobile styles with these */
+  /* Improved Mobile Responsiveness with Larger Square Cells */
 
-/* Base responsive styles */
 @media screen and (max-width: 768px) {
     body {
       padding: 10px;
+      max-width: 100%;
     }
     
     /* Make the game container stack vertically */
@@ -962,33 +962,55 @@ button:hover {
       gap: 8px;
     }
     
-    /* Make the board a perfect square */
+    /* Make the board-container take more screen width */
     .board-container {
-      width: 100%;
+      width: 95%;
       margin: 0 auto;
-      max-width: 90vmin; /* Use viewport minimum for sizing */
     }
     
-    .board {
+    /* Ensure the board with row labels fills available width */
+    .board-with-row-labels {
+      display: flex;
       width: 100%;
+    }
+    
+    /* Make row labels narrower to give more space to the board */
+    .row-labels {
+      width: 8%;
+    }
+    
+    .row-label {
+      width: 100%;
+      height: 0;
+      padding-bottom: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    /* Make the board fill the remaining width (92%) */
+    .board {
+      width: 92%;
       height: auto;
-      aspect-ratio: 1/1; /* Keep it perfectly square */
+      aspect-ratio: 1/1; /* Keep the overall board square */
       display: grid;
       grid-template-columns: repeat(8, 1fr);
       grid-template-rows: repeat(8, 1fr);
       gap: 2px;
+      padding: 3px;
     }
     
-    /* Make cells square */
+    /* Make each cell a proper square */
     .cell {
-      width: auto;
+      width: 100%;
       height: 0;
-      padding-bottom: 100%; /* Makes each cell a square */
+      padding-bottom: 100%; /* This makes each cell square */
       position: relative;
       font-size: 10px;
     }
     
-    /* Position ions properly in the responsive cells */
+    /* Position ions centered in cells */
     .ion {
       position: absolute;
       width: 80%;
@@ -997,19 +1019,16 @@ button:hover {
       left: 10%;
     }
     
-    /* Adjust row and column labels */
-    .row-label {
-      height: 0;
-      padding-bottom: 100%;
-      width: 25px;
+    /* Adjust column labels to match cell widths */
+    .column-labels {
+      margin-left: 8%; /* Match row-labels width */
+      width: 92%; /* Match board width */
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
     }
     
     .column-label {
-      width: auto;
+      flex: 1;
+      text-align: center;
       font-size: 12px;
     }
     
