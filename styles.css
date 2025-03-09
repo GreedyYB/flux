@@ -452,6 +452,80 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+    max-width: 350px; /* Reduced width */
+    margin-left: auto;
+    margin-right: auto;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Player Color Selection */
+.player-color {
+    margin-top: 10px;
+    background-color: #2a2a4a;
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 350px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.player-color label {
+    margin-right: 10px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.color-toggle {
+    display: flex;
+    background-color: #1a1a2e;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.color-toggle input[type="radio"] {
+    display: none;
+}
+
+.color-toggle label {
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: normal;
+    margin: 0;
+}
+
+.color-toggle input[type="radio"]:checked + label {
+    background-color: #3498db;
+    color: white;
+    font-weight: bold;
+}
+
+.color-toggle label[for="play-white"] {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.color-toggle label[for="play-black"] {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.color-toggle input[type="radio"]:checked + label[for="play-white"] {
+    background-color: #3498db;
+}
+
+.color-toggle input[type="radio"]:checked + label[for="play-black"] {
+    background-color: #2c3e50;
+}
+
+/* Hide game mode, difficulty, and player color selectors when game is in progress */
+body.game-started .game-mode,
+body.game-started .ai-difficulty,
+body.game-started .player-color {
+    display: none !important;
+    opacity: 0;
+    visibility: hidden;
 }
 
 .game-mode label, .ai-difficulty label {

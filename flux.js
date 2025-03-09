@@ -15,8 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
         reviewMode: false,
         moveHistory: [], // Will store board states and other information
         currentReviewMove: 0,
-        nexusPositions: null,  // Line you added earlier
-        finalBoardState: null  // Add this new line
+        nexusPositions: null,
+        finalBoardState: null,
+        pendingAIMove: false  // Add this line for AI playing first when player is black
     };
 
     // Timer state
@@ -44,77 +45,84 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // DOM elements
-    const boardElement = getElement('board');
-    const columnLabelsElement = getElement('column-labels');
-    const rowLabelsElement = getElement('row-labels');
-    const currentPlayerElement = getElement('current-player');
-    const whiteScoreElement = getElement('white-score');
-    const blackScoreElement = getElement('black-score');
-    const messagesContentElement = getElement('messages-content');
-    const resetButton = getElement('reset-button');
-    const helpButton = getElement('help-button');
-    const terminateButton = getElement('terminate-button');
-    const helpText = getElement('help-text');
-    const gameOverBanner = getElement('game-over-banner');
-    const notificationElement = getElement('notification');
+const boardElement = getElement('board');
+const columnLabelsElement = getElement('column-labels');
+const rowLabelsElement = getElement('row-labels');
+// Remove this - it doesn't exist in your HTML
+// const currentPlayerElement = getElement('current-player');
+const whiteScoreElement = getElement('white-score');
+const blackScoreElement = getElement('black-score');
+const messagesContentElement = getElement('messages-content');
+const resetButton = getElement('reset-button');
+const helpButton = getElement('help-button');
+const terminateButton = getElement('terminate-button');
+const helpText = getElement('help-text');
+const gameOverBanner = getElement('game-over-banner');
+const notificationElement = getElement('notification');
 
-    // Add this function after your other DOM element references
-    function updateAIDifficultyVisibility(gameMode) {
-        const aiDifficultyContainer = document.querySelector('.ai-difficulty');
-        if (!aiDifficultyContainer) return;
-        
-        // Only show AI difficulty selector when in AI mode
-        if (gameMode === 'ai') {
-            aiDifficultyContainer.style.display = 'flex';
-        } else {
-            aiDifficultyContainer.style.display = 'none';
-        }
-    }
+// Initialize player color selection
+const playWhiteRadio = getElement('play-white');
+const playBlackRadio = getElement('play-black');
 
-    // Add this function to control the ai-mode class on the body
-    function updateGameModeClass(gameMode) {
-        // Add or remove the ai-mode class from the body
-        if (gameMode === 'ai') {
-            document.body.classList.add('ai-mode');
-        } else {
-            document.body.classList.remove('ai-mode');
-        }
-    }
+// Add this function after your other DOM element references
+function updateAIDifficultyVisibility(gameMode) {
+    const aiDifficultyContainer = document.querySelector('.ai-difficulty');
+    if (!aiDifficultyContainer) return;
     
-    // CORE avatar elements
-    const coreAvatar = getElement('core-avatar');
-    const coreStatus = coreAvatar ? coreAvatar.querySelector('.avatar-status') : null;
-    const coreAvatarHeader = getElement('core-avatar-header');
-    
-    // Review controls
-    const reviewControlsElement = getElement('review-controls');
-    const reviewFirstButton = getElement('review-first');
-    const reviewPrevButton = getElement('review-prev');
-    const reviewNextButton = getElement('review-next');
-    const reviewLastButton = getElement('review-last');
-    const reviewMoveCounter = getElement('review-move-counter');
-
-    // Timer elements
-    const timerSetupElement = getElement('timer-setup');
-    const timerOptionsElement = getElement('timer-options');
-    const useTimerCheckbox = getElement('use-timer');
-    const baseTimeSelect = getElement('base-time');
-    const incrementSelect = getElement('increment');
-    const startGameButton = getElement('start-game');
-    const timerDisplayElement = getElement('timer-display');
-    const whiteTimerElement = getElement('white-timer');
-    const blackTimerElement = getElement('black-timer');
-    const whiteTimerValueElement = whiteTimerElement ? whiteTimerElement.querySelector('.timer-value') : null;
-    const blackTimerValueElement = blackTimerElement ? blackTimerElement.querySelector('.timer-value') : null;
-
-    // Game mode select
-    const gameModeSelect = getElement('game-mode');
-    
-    // Only initialize the game if critical elements exist
-    if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
-        console.error("Critical game elements not found. Cannot initialize game.");
-        return;
+    // Only show AI difficulty selector when in AI mode
+    if (gameMode === 'ai') {
+        aiDifficultyContainer.style.display = 'flex';
+    } else {
+        aiDifficultyContainer.style.display = 'none';
     }
+}
+
+// Add this function to control the ai-mode class on the body
+function updateGameModeClass(gameMode) {
+    // Add or remove the ai-mode class from the body
+    if (gameMode === 'ai') {
+        document.body.classList.add('ai-mode');
+    } else {
+        document.body.classList.remove('ai-mode');
+    }
+}
+
+// CORE avatar elements
+const coreAvatar = getElement('core-avatar');
+const coreStatus = coreAvatar ? coreAvatar.querySelector('.avatar-status') : null;
+// Remove this - it doesn't exist in your HTML
+// const coreAvatarHeader = getElement('core-avatar-header');
+
+// Review controls
+const reviewControlsElement = getElement('review-controls');
+const reviewFirstButton = getElement('review-first');
+const reviewPrevButton = getElement('review-prev');
+const reviewNextButton = getElement('review-next');
+const reviewLastButton = getElement('review-last');
+const reviewMoveCounter = getElement('review-move-counter');
+
+// Timer elements
+const timerSetupElement = getElement('timer-setup');
+const timerOptionsElement = getElement('timer-options');
+const useTimerCheckbox = getElement('use-timer');
+const baseTimeSelect = getElement('base-time');
+const incrementSelect = getElement('increment');
+const startGameButton = getElement('start-game');
+// Remove this - it doesn't exist in your HTML
+// const timerDisplayElement = getElement('timer-display');
+const whiteTimerElement = getElement('white-timer');
+const blackTimerElement = getElement('black-timer');
+const whiteTimerValueElement = whiteTimerElement ? whiteTimerElement.querySelector('.timer-value') : null;
+const blackTimerValueElement = blackTimerElement ? blackTimerElement.querySelector('.timer-value') : null;
+
+// Game mode select
+const gameModeSelect = getElement('game-mode');
+
+// Only initialize the game if critical elements exist
+if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
+    console.error("Critical game elements not found. Cannot initialize game.");
+    return;
+}
 
     // Set up game mode change handler
     if (gameModeSelect && coreAvatar) {
@@ -201,115 +209,118 @@ document.addEventListener('DOMContentLoaded', function() {
         return linesInfo.linesFormed > 0;
     }
 
-    // Update the initializeBoard function to create cells with properly centered content
-function initializeBoard() {
-    // Create column labels (A-H)
-    columnLabelsElement.innerHTML = '';
-    for (let col = 0; col < BOARD_SIZE; col++) {
-        const label = document.createElement('div');
-        label.className = 'column-label';
-        label.textContent = String.fromCharCode(65 + col);
-        columnLabelsElement.appendChild(label);
-    }
-    
-    // Create row labels (8-1)
-    rowLabelsElement.innerHTML = '';
-    for (let row = 0; row < BOARD_SIZE; row++) {
-        const label = document.createElement('div');
-        label.className = 'row-label';
-        label.textContent = BOARD_SIZE - row;
-        rowLabelsElement.appendChild(label);
-    }
-    
-    // Create cells
-    boardElement.innerHTML = '';
-    
-    // Create container for vector lines
-    const lineContainer = document.createElement('div');
-    lineContainer.className = 'vector-line-container';
-    boardElement.appendChild(lineContainer);
-    
-    for (let row = 0; row < BOARD_SIZE; row++) {
-        for (let col = 0; col < BOARD_SIZE; col++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.row = row;
-            cell.dataset.col = col;
+    // Helper function to create or update cell content
+    function updateCellContent(cell, row, col, pieceData) {
+        // Clear cell
+        cell.innerHTML = '';
+        
+        if (pieceData) {
+            // Create ion
+            const ion = document.createElement('div');
+            ion.className = `ion ${pieceData.color}-ion`;
             
-            // Create a centered content wrapper
+            // Add protection level if needed
+            if (pieceData.protectionLevel > 0) {
+                ion.classList.add(`protection-${pieceData.protectionLevel}`);
+            }
+            
+            cell.appendChild(ion);
+        } else {
+            // Show coordinates if no piece
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
             cellContent.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
             cell.appendChild(cellContent);
-            
-            cell.addEventListener('click', () => handleCellClick(row, col));
-            boardElement.appendChild(cell);
         }
     }
 
-    // Set initial active player indicator ONLY if game is in progress
-    if (state.gameStarted && !state.gameOver) {
-        document.querySelector('.white-score').classList.add('active-player');
-        document.querySelector('.black-score').classList.remove('active-player');
-    } else {
-        // Remove active player styling when not in active game
-        document.querySelector('.white-score').classList.remove('active-player');
-        document.querySelector('.black-score').classList.remove('active-player');
-    }
-}
-
-// Update the updateBoard function to create cells with properly centered content
-function updateBoard() {
-    for (let row = 0; row < BOARD_SIZE; row++) {
+    // Update the initializeBoard function to create cells with properly centered content
+    function initializeBoard() {
+        // Create column labels (A-H)
+        columnLabelsElement.innerHTML = '';
         for (let col = 0; col < BOARD_SIZE; col++) {
-            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-            if (!cell) continue;
-            
-            const pieceData = state.board[row][col];
-            
-            // Clear any previous highlights
-            cell.classList.remove('last-move');
-            
-            // Highlight last move
-            if (state.lastMove && state.lastMove.row === row && state.lastMove.col === col) {
-                cell.classList.add('last-move');
-            }
-            
-            // Clear cell
-            cell.innerHTML = '';
-            
-            if (pieceData) {
-                // Create ion
-                const ion = document.createElement('div');
-                ion.className = `ion ${pieceData.color}-ion`;
-                
-                // Add protection level if needed
-                if (pieceData.protectionLevel > 0) {
-                    ion.classList.add(`protection-${pieceData.protectionLevel}`);
-                }
-                
-                cell.appendChild(ion);
-            } else {
-                // Show coordinates if no piece, with proper centering
-                const cellContent = document.createElement('div');
-                cellContent.className = 'cell-content';
-                cellContent.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
-                cell.appendChild(cellContent);
-            }
+            const label = document.createElement('div');
+            label.className = 'column-label';
+            label.textContent = String.fromCharCode(65 + col);
+            columnLabelsElement.appendChild(label);
         }
-    }
-    
-    // Ensure vector line container exists
-    let lineContainer = boardElement.querySelector('.vector-line-container');
-    if (!lineContainer) {
-        lineContainer = document.createElement('div');
+        
+        // Create row labels (8-1)
+        rowLabelsElement.innerHTML = '';
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.textContent = BOARD_SIZE - row;
+            rowLabelsElement.appendChild(label);
+        }
+        
+        // Create cells
+        boardElement.innerHTML = '';
+        
+        // Create container for vector lines
+        const lineContainer = document.createElement('div');
         lineContainer.className = 'vector-line-container';
         boardElement.appendChild(lineContainer);
+        
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                
+                // Update cell content using the helper function
+                updateCellContent(cell, row, col, null);
+                
+                cell.addEventListener('click', () => handleCellClick(row, col));
+                boardElement.appendChild(cell);
+            }
+        }
+
+        // Set initial active player indicator ONLY if game is in progress
+        if (state.gameStarted && !state.gameOver) {
+            document.querySelector('.white-score').classList.add('active-player');
+            document.querySelector('.black-score').classList.remove('active-player');
+        } else {
+            // Remove active player styling when not in active game
+            document.querySelector('.white-score').classList.remove('active-player');
+            document.querySelector('.black-score').classList.remove('active-player');
+        }
     }
-    
-    // Update scores display
-    updateScores();
-}
+
+    // Update the board display
+    function updateBoard() {
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                if (!cell) continue;
+                
+                const pieceData = state.board[row][col];
+                
+                // Clear any previous highlights
+                cell.classList.remove('last-move');
+                
+                // Highlight last move
+                if (state.lastMove && state.lastMove.row === row && state.lastMove.col === col) {
+                    cell.classList.add('last-move');
+                }
+                
+                // Update cell content using the helper function
+                updateCellContent(cell, row, col, pieceData);
+            }
+        }
+        
+        // Ensure vector line container exists
+        let lineContainer = boardElement.querySelector('.vector-line-container');
+        if (!lineContainer) {
+            lineContainer = document.createElement('div');
+            lineContainer.className = 'vector-line-container';
+            boardElement.appendChild(lineContainer);
+        }
+        
+        // Update scores display
+        updateScores();
+    }
 
     // Update scores display
     function updateScores() {
@@ -435,15 +446,14 @@ function updateBoard() {
             // Get increment in seconds
             timerState.increment = parseInt(incrementSelect.value);
             
-            // Show timers directly in the game-info grid
-            if (whiteTimerElement) whiteTimerElement.style.display = 'flex';
-            if (blackTimerElement) blackTimerElement.style.display = 'flex';
+            // Show timers using CSS class
+            document.body.classList.add('timer-active');
             
             // Set initial display
             updateTimerDisplay();
             
-            // Start white's timer
-            timerState.activeTimer = 'white';
+            // Start white's timer (or black's if player chose black)
+            timerState.activeTimer = state.currentPlayer;
             startTimer();
         }
     }
@@ -453,75 +463,14 @@ function updateBoard() {
         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
         if (!cell) return;
         
-        // Clear cell contents
-        cell.innerHTML = '';
-        
-        // Create ion
-        const ion = document.createElement('div');
-        ion.className = `ion ${color}-ion`;
-        
-        // Add protection level if needed
-        if (protectionLevel > 0) {
-            ion.classList.add(`protection-${protectionLevel}`);
-        }
-        
-        cell.appendChild(ion);
-        
         // Update state
         state.board[row][col] = {
             color: color,
             protectionLevel: protectionLevel
         };
-    }
-
-    // Update the board display
-    function updateBoard() {
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-                if (!cell) continue;
-                
-                const pieceData = state.board[row][col];
-                
-                // Clear any previous highlights
-                cell.classList.remove('last-move');
-                
-                // Highlight last move
-                if (state.lastMove && state.lastMove.row === row && state.lastMove.col === col) {
-                    cell.classList.add('last-move');
-                }
-                
-                // Clear cell
-                cell.innerHTML = '';
-                
-                if (pieceData) {
-                    // Create ion
-                    const ion = document.createElement('div');
-                    ion.className = `ion ${pieceData.color}-ion`;
-                    
-                    // Add protection level if needed
-                    if (pieceData.protectionLevel > 0) {
-                        ion.classList.add(`protection-${pieceData.protectionLevel}`);
-                    }
-                    
-                    cell.appendChild(ion);
-                } else {
-                    // Show coordinates if no piece
-                    cell.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
-                }
-            }
-        }
         
-        // Ensure vector line container exists
-        let lineContainer = boardElement.querySelector('.vector-line-container');
-        if (!lineContainer) {
-            lineContainer = document.createElement('div');
-            lineContainer.className = 'vector-line-container';
-            boardElement.appendChild(lineContainer);
-        }
-        
-        // Update scores display
-        updateScores();
+        // Update cell appearance using the helper function
+        updateCellContent(cell, row, col, state.board[row][col]);
     }
 
     // ==================== VECTOR VISUALIZATION FUNCTIONS ====================
@@ -792,7 +741,7 @@ function updateBoard() {
     function switchToNextPlayer() {
         // Switch players
         state.currentPlayer = state.currentPlayer === 'white' ? 'black' : 'white';
-        if (currentPlayerElement) currentPlayerElement.textContent = state.currentPlayer.charAt(0).toUpperCase() + state.currentPlayer.slice(1);
+        // No need to update currentPlayerElement since it doesn't exist
         
         // Switch timer if enabled
         if (timerState.enabled) {
@@ -958,104 +907,109 @@ function updateBoard() {
 
     // Handle cell click
     function handleCellClick(row, col) {
-        // If in review mode, ignore clicks on the board
-        if (state.reviewMode) {
-            showNotification("You are in review mode. Use the review controls to navigate the game.");
-            return;
-        }
-        
-        // Check if game is not started yet
-        if (!state.gameStarted) {
-            showNotification("Please click 'Start Game' to begin playing.");
-            return;
-        }
-        
-        // Check if game is over
-        if (state.gameOver) {
-            showNotification("Game is over. Please reset to play again.");
-            return;
-        }
-        
-        // Check if cell is already occupied
-        if (state.board[row][col] !== null) {
-            showNotification("This cell is already occupied!");
-            return;
-        }
-        
-        // Check if move would create line longer than 4
-        if (wouldCreateLineTooLong(row, col, state.currentPlayer)) {
-            showNotification(`Cannot place here - would create a line longer than ${LINE_LENGTH} ions!`);
-            return;
-        }
-        
-        // Before making the move, save current board state to history
-        saveCurrentStateToHistory();
-        
-        // Place ion
-        placeIon(row, col, state.currentPlayer);
-        
-        // Update last move
-        state.lastMove = { row, col };
-        
-        // Increment move counter
-        state.moveCount++;
-        
-        // Get position label
-        const positionLabel = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
-        
-        // Store the current player to use throughout this move
-        const currentPlayer = state.currentPlayer;
-        
-        // Check for Vectors
-        const linesInfo = checkForLines(row, col, currentPlayer);
-        
-        if (linesInfo.linesFormed > 0) {
-            // Update the protection level of the placed piece
-            state.board[row][col].protectionLevel = linesInfo.linesFormed;
-            
-            // Update score - add protection level to player's score
-            if (currentPlayer === 'white') {
-                state.whiteScore += linesInfo.linesFormed;
-            } else {
-                state.blackScore += linesInfo.linesFormed;
+        try {
+            // If in review mode, ignore clicks on the board
+            if (state.reviewMode) {
+                showNotification("You are in review mode. Use the review controls to navigate the game.");
+                return;
             }
             
-            // Add to game log with N notation
-            const nodeLabel = linesInfo.linesFormed > 1 ? 
-                `${positionLabel}<span class="node-marker">N</span>${linesInfo.linesFormed}` : 
-                `${positionLabel}<span class="node-marker">N</span>`;
-                    
-            addGameLogEntry(nodeLabel);
+            // Check if game is not started yet
+            if (!state.gameStarted) {
+                showNotification("Please click 'Start Game' to begin playing.");
+                return;
+            }
             
-            // Switch players BEFORE animations start
-            // This ensures the next player is set correctly
-            switchToNextPlayer();
+            // Check if game is over
+            if (state.gameOver) {
+                showNotification("Game is over. Please reset to play again.");
+                return;
+            }
             
-            // Process the vectors sequentially with animations
-            processVectorsSequentially(linesInfo.vectors, row, col, linesInfo.linesFormed, () => {
-                // After all animations complete, check for Nexus
-                const nexusResult = checkForNexus();
-                if (nexusResult) {
-                    endGameWithNexus(nexusResult);
-                    return;
+            // Check if cell is already occupied
+            if (state.board[row][col] !== null) {
+                showNotification("This cell is already occupied!");
+                return;
+            }
+            
+            // Check if move would create line longer than 4
+            if (wouldCreateLineTooLong(row, col, state.currentPlayer)) {
+                showNotification(`Cannot place here - would create a line longer than ${LINE_LENGTH} ions!`);
+                return;
+            }
+            
+            // Before making the move, save current board state to history
+            saveCurrentStateToHistory();
+            
+            // Place ion
+            placeIon(row, col, state.currentPlayer);
+            
+            // Update last move
+            state.lastMove = { row, col };
+            
+            // Increment move counter
+            state.moveCount++;
+            
+            // Get position label
+            const positionLabel = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
+            
+            // Store the current player to use throughout this move
+            const currentPlayer = state.currentPlayer;
+            
+            // Check for Vectors
+            const linesInfo = checkForLines(row, col, currentPlayer);
+            
+            if (linesInfo.linesFormed > 0) {
+                // Update the protection level of the placed piece
+                state.board[row][col].protectionLevel = linesInfo.linesFormed;
+                
+                // Update score - add protection level to player's score
+                if (currentPlayer === 'white') {
+                    state.whiteScore += linesInfo.linesFormed;
+                } else {
+                    state.blackScore += linesInfo.linesFormed;
                 }
+                
+                // Add to game log with N notation
+                const nodeLabel = linesInfo.linesFormed > 1 ? 
+                    `${positionLabel}<span class="node-marker">N</span>${linesInfo.linesFormed}` : 
+                    `${positionLabel}<span class="node-marker">N</span>`;
+                        
+                addGameLogEntry(nodeLabel);
+                
+                // Switch players BEFORE animations start
+                // This ensures the next player is set correctly
+                switchToNextPlayer();
+                
+                // Process the vectors sequentially with animations
+                processVectorsSequentially(linesInfo.vectors, row, col, linesInfo.linesFormed, () => {
+                    // After all animations complete, check for Nexus
+                    const nexusResult = checkForNexus();
+                    if (nexusResult) {
+                        endGameWithNexus(nexusResult);
+                        return;
+                    }
+                    
+                    // Check if no legal moves left
+                    if (!hasLegalMoves()) {
+                        endGameByNodeCount();
+                    }
+                });
+            } else {
+                // Just add the position to the game log
+                addGameLogEntry(positionLabel);
+                
+                // Switch players immediately since there are no animations
+                switchToNextPlayer();
                 
                 // Check if no legal moves left
                 if (!hasLegalMoves()) {
                     endGameByNodeCount();
                 }
-            });
-        } else {
-            // Just add the position to the game log
-            addGameLogEntry(positionLabel);
-            
-            // Switch players immediately since there are no animations
-            switchToNextPlayer();
-            
-            // Check if no legal moves left
-            if (!hasLegalMoves()) {
-                endGameByNodeCount();
             }
+        } catch (error) {
+            console.error("Error handling cell click:", error);
+            showNotification("An error occurred. Please try again.");
         }
     }
 
@@ -1120,8 +1074,8 @@ function updateBoard() {
     // End game with a Nexus
     function endGameWithNexus(result) {
         state.gameOver = true;
-        state.nexusPositions = result.positions;  // Line you added earlier
-        state.finalBoardState = JSON.parse(JSON.stringify(state.board));  // Add this new line
+        state.nexusPositions = result.positions;
+        state.finalBoardState = JSON.parse(JSON.stringify(state.board));
         
         // Important: Immediately disable all board click events to prevent further moves
         document.querySelectorAll('.cell').forEach(cell => {
@@ -1395,8 +1349,9 @@ function updateBoard() {
         state.reviewMode = false;
         state.moveHistory = [];
         state.currentReviewMove = 0;
-        state.nexusPositions = null;  // Reset the Nexus positions
-        state.finalBoardState = null;  // Reset the final board state
+        state.nexusPositions = null;
+        state.finalBoardState = null;
+        state.pendingAIMove = false;
         
         // Also remove the 'winning-line' class from any cells
         document.querySelectorAll('.winning-line').forEach(cell => {
@@ -1415,8 +1370,7 @@ function updateBoard() {
         });
 
         // Hide timers
-        if (whiteTimerElement) whiteTimerElement.style.display = 'none';
-        if (blackTimerElement) blackTimerElement.style.display = 'none';
+        document.body.classList.remove('timer-active');
             
         // Reset timer state
         if (baseTimeSelect) {
@@ -1432,9 +1386,10 @@ function updateBoard() {
         }
         
         // Update UI
-        if (currentPlayerElement) currentPlayerElement.textContent = 'White';
-        if (whiteScoreElement) whiteScoreElement.textContent = '0';
-        if (blackScoreElement) blackScoreElement.textContent = '0';
+// Removed: no longer using currentPlayerElement
+// if (currentPlayerElement) currentPlayerElement.textContent = 'White';
+if (whiteScoreElement) whiteScoreElement.textContent = '0';
+if (blackScoreElement) blackScoreElement.textContent = '0';
         
         // Clear game log
         if (messagesContentElement) messagesContentElement.innerHTML = '';
@@ -1446,8 +1401,8 @@ function updateBoard() {
         if (reviewControlsElement) reviewControlsElement.style.display = 'none';
         
         // Show timer setup again
-        if (timerSetupElement) timerSetupElement.style.display = 'flex';
-        if (timerDisplayElement) timerDisplayElement.style.display = 'none';
+if (timerSetupElement) timerSetupElement.style.display = 'flex';
+// Remove this line: if (timerDisplayElement) timerDisplayElement.style.display = 'none';
         
         // Reset board
         updateBoard();
@@ -1582,7 +1537,7 @@ function updateBoard() {
         
         // Update UI
         updateBoard();
-        if (currentPlayerElement) currentPlayerElement.textContent = 'White';
+        // Remove this line: if (currentPlayerElement) currentPlayerElement.textContent = 'White';
         if (whiteScoreElement) whiteScoreElement.textContent = '0';
         if (blackScoreElement) blackScoreElement.textContent = '0';
         
@@ -1608,7 +1563,7 @@ function updateBoard() {
         
         // Update UI
         updateBoard();
-        if (currentPlayerElement) currentPlayerElement.textContent = state.currentPlayer.charAt(0).toUpperCase() + state.currentPlayer.slice(1);
+        // No longer updating currentPlayerElement text
         if (whiteScoreElement) whiteScoreElement.textContent = state.whiteScore;
         if (blackScoreElement) blackScoreElement.textContent = state.blackScore;
     }
@@ -1649,32 +1604,82 @@ function updateBoard() {
     }
     
     // Start game button
-    if (startGameButton) {
-        startGameButton.addEventListener('click', function() {
-            state.gameStarted = true;
-            
-            // Hide setup and show timers if needed
-            if (timerSetupElement) timerSetupElement.style.display = 'none';
-            
-            // Setup timers
-            setupTimers();
-            
-            // Save initial empty board state to history
-            saveCurrentStateToHistory();
-            
-            // Initialize CORE's status
-            updateCoreStatus('Waiting');
-            
-            // Add this code to ensure white is set as active at game start
-            if (state.gameStarted && !state.gameOver) {
-                document.querySelector('.white-score').classList.add('active-player');
-                document.querySelector('.black-score').classList.remove('active-player');
-                
-                // ADD THIS LINE to add game-started class to body
-                document.body.classList.add('game-started');
+if (startGameButton) {
+    startGameButton.addEventListener('click', function() {
+        // Get selected player color
+        const selectedColor = playWhiteRadio && playWhiteRadio.checked ? 'white' : 'black';
+        
+        // Always start with white as the current player (as per game rules)
+        state.currentPlayer = 'white';
+        
+        // If player chose black and playing against AI, set a flag for AI to make first move
+        if (selectedColor === 'black') {
+            const gameMode = document.getElementById('game-mode').value;
+            if (gameMode === 'ai') {
+                // Set a flag to trigger AI's first move as white
+                state.pendingAIMove = true;
             }
-        });
-    }
+        }
+        
+        state.gameStarted = true;
+        
+        // Hide setup and show timers if needed
+        if (timerSetupElement) timerSetupElement.style.display = 'none';
+        
+        // Setup timers
+        setupTimers();
+        
+        // Save initial empty board state to history
+        saveCurrentStateToHistory();
+        
+        // Initialize CORE's status
+        updateCoreStatus('Waiting');
+        
+        // Update active player visual indicator
+        document.querySelector('.white-score').classList.remove('active-player');
+        document.querySelector('.black-score').classList.remove('active-player');
+        
+        const activeScoreClass = '.white-score'; // Always white first
+        document.querySelector(activeScoreClass).classList.add('active-player');
+        
+        // Add game-started class to body
+        document.body.classList.add('game-started');
+        
+        // If AI should make first move (player chose black)
+        if (state.pendingAIMove) {
+            // Small delay to ensure UI updates first
+            setTimeout(() => {
+                const difficulty = parseInt(document.getElementById('ai-difficulty').value);
+                updateCoreStatus('Thinking...');
+                
+                // Random delay to simulate thinking
+                const thinkingDelay = 1500 + Math.floor(Math.random() * 1500);
+                
+                setTimeout(() => {
+                    try {
+                        // AI is playing as white for the first move
+                        const move = getAIMove(state.board, 'white', difficulty);
+                        updateCoreStatus('Move found');
+                        
+                        setTimeout(() => {
+                            if (move) {
+                                handleCellClick(move.row, move.col);
+                                setTimeout(() => {
+                                    updateCoreStatus('Waiting');
+                                }, 1000);
+                            }
+                            state.pendingAIMove = false;
+                        }, 800);
+                    } catch (error) {
+                        console.error("Error in AI's first move:", error);
+                        state.pendingAIMove = false;
+                        updateCoreStatus('Waiting');
+                    }
+                }, thinkingDelay);
+            }, 500);
+        }
+    });
+}
     
     // Event listeners
     if (resetButton) {
@@ -1739,45 +1744,161 @@ function updateBoard() {
     // Call the setup function
     setupAIDifficultyChangeHandler();
 
-    // AI Game Loop
-    let isAIMakingMove = false; // Track if the AI is currently making a move
+    // Get all legal moves
+function getLegalMoves(board, player) {
+    const legalMoves = [];
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            if (board[row][col] === null && !wouldCreateLineTooLong(row, col, player, board)) {
+                legalMoves.push({ row, col });
+            }
+        }
+    }
+    return legalMoves;
+}
 
-    function gameLoop() {
-        if (state.gameOver || !state.gameStarted || isAIMakingMove) return;
+// Helper for checking if move would create too long line
+function wouldCreateLineTooLong(row, col, player, boardParam) {
+    // Determine if we're using the AI version or player version
+    const board = boardParam || state.board;
     
-        const gameMode = document.getElementById('game-mode').value;
+    // Handle invalid inputs
+    if (!board || typeof row !== 'number' || typeof col !== 'number' || !player) {
+        console.error("Invalid parameters for wouldCreateLineTooLong:", row, col, player);
+        return true; // Assume invalid move
+    }
     
-        // Only run AI logic if game mode is 'ai' AND current player is black
-        if (gameMode === 'ai' && state.currentPlayer === 'black') {
-            isAIMakingMove = true; // Prevent multiple AI moves from being queued
-            const difficulty = parseInt(document.getElementById('ai-difficulty').value);
+    // Make sure row and col are valid
+    if (row < 0 || row >= 8 || col < 0 || col >= 8) {
+        return true; // Invalid position
+    }
     
-            // Add a small initial delay to ensure previous animations have completed
+    // Temporarily place the ion
+    const originalValue = board[row][col];
+    board[row][col] = { color: player, protectionLevel: 0 };
+
+    const directions = [
+        [0, 1],  // horizontal
+        [1, 0],  // vertical
+        [1, 1],  // diagonal down-right
+        [1, -1]  // diagonal down-left
+    ];
+
+    let tooLong = false;
+
+    // Check each direction
+    for (const [dr, dc] of directions) {
+        let count = 1;  // Start with the placed ion
+
+        // Count in positive direction
+        for (let i = 1; i < 8; i++) {
+            const r = row + i * dr;
+            const c = col + i * dc;
+
+            if (r >= 0 && r < 8 && c >= 0 && c < 8 && 
+                board[r][c] && board[r][c].color === player) {
+                count++;
+            } else {
+                break;
+            }
+        }
+
+        // Count in negative direction
+        for (let i = 1; i < 8; i++) {
+            const r = row - i * dr;
+            const c = col - i * dc;
+
+            if (r >= 0 && r < 8 && c >= 0 && c < 8 && 
+                board[r][c] && board[r][c].color === player) {
+                count++;
+            } else {
+                break;
+            }
+        }
+
+        if (count > 4) {
+            tooLong = true;
+            break;
+        }
+    }
+
+    // Restore the original value
+    board[row][col] = originalValue;
+
+    return tooLong;
+}
+
+    // AI Game Loop
+let isAIMakingMove = false; // Track if the AI is currently making a move
+
+function gameLoop() {
+    if (state.gameOver || !state.gameStarted || isAIMakingMove) return;
+
+    const gameMode = document.getElementById('game-mode').value;
+    
+    // Only continue if in AI mode
+    if (gameMode !== 'ai') return;
+    
+    // Get selected player color
+    const playerIsWhite = playWhiteRadio && playWhiteRadio.checked;
+    
+    // AI's color is opposite of player's color
+    const aiColor = playerIsWhite ? 'black' : 'white';
+    
+    // Only run AI logic if it's the AI's turn
+    if (state.currentPlayer === aiColor) {
+        isAIMakingMove = true; // Prevent multiple AI moves from being queued
+        const difficulty = parseInt(document.getElementById('ai-difficulty').value);
+
+        // Add a small initial delay to ensure previous animations have completed
+        setTimeout(() => {
+            // Update CORE's status to thinking
+            updateCoreStatus('Thinking...');
+
+            // Generate a random delay to simulate thinking
+            const thinkingDelay = 1500 + Math.floor(Math.random() * 1500);
+            
+            // First, use a timeout to simulate "thinking" time
             setTimeout(() => {
-                // Update CORE's status to thinking
-                updateCoreStatus('Thinking...');
-    
-                // Generate a random delay between 3-5 seconds
-                const thinkingDelay = 3000 + Math.floor(Math.random() * 2000);
-                
-                // First, use a timeout to simulate "thinking" time
-                setTimeout(() => {
+                try {
+                    // Add a timeout for AI thinking to prevent hanging
+                    const moveTimeout = setTimeout(() => {
+                        console.log("AI move timeout - using fallback move");
+                        // Fallback to a simple random move
+                        try {
+                            const legalMoves = getLegalMoves(state.board, aiColor);
+                            if (legalMoves.length > 0) {
+                                const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+                                handleCellClick(randomMove.row, randomMove.col);
+                            }
+                        } catch (err) {
+                            console.error("Error finding legal moves:", err);
+                        }
+                        isAIMakingMove = false;
+                    }, 8000); // 8 second max for AI to think
+
+                    let move = null;
                     try {
-                        const move = getAIMove(state.board, 'black', difficulty);
+                        move = getAIMove(state.board, aiColor, difficulty);
                         
-                        if (move) {
-                            // Show "move found" status briefly
-                            updateCoreStatus('Move found');
-                            
-                            setTimeout(() => {
-                                console.log("AI move:", move);
-                                
+                        // Clear the timeout since we got a move
+                        clearTimeout(moveTimeout);
+                    } catch (aiError) {
+                        console.error("Error in getAIMove:", aiError);
+                        clearTimeout(moveTimeout);
+                    }
+
+                    if (move) {
+                        // Show "move found" status briefly
+                        updateCoreStatus('Move found');
+                        
+                        setTimeout(() => {
+                            try {
                                 // Check if this move will create a node
-                                const willCreateNode = willMoveCreateNode(move.row, move.col, 'black');
+                                const willCreateNode = willMoveCreateNode(move.row, move.col, aiColor);
                                 
-                                // Make the move only if the current player is still black
-                                // (this is a safety check in case something changed during the delay)
-                                if (state.currentPlayer === 'black') {
+                                // Make the move only if the current player is still the AI's color
+                                if (state.currentPlayer === aiColor) {
                                     handleCellClick(move.row, move.col);
                                     
                                     // If node was created, show special status
@@ -1795,102 +1916,65 @@ function updateBoard() {
                                         }, 1000);
                                     }
                                 } else {
-                                    // If it's not black's turn anymore, just reset CORE's status
+                                    // If it's not the AI's turn anymore, just reset CORE's status
                                     updateCoreStatus('Waiting');
                                 }
-                            }, 800); // Short delay to show "move found" status
-                        } else {
-                            console.log("No valid move found for AI");
-                            if (!state.gameOver) {
-                                // If no valid moves and game isn't over, might need to handle special case
-                                endGameByNodeCount();
-                            }
-                            updateCoreStatus('Waiting');
-                        }
-                    } catch (error) {
-                        console.error("Error in AI move:", error);
-                        // Fallback - try a random move if possible
-                        const legalMoves = [];
-                        for (let row = 0; row < 8; row++) {
-                            for (let col = 0; col < 8; col++) {
-                                if (state.board[row][col] === null && !wouldCreateLineTooLong(row, col, 'black')) {
-                                    legalMoves.push({ row, col });
-                                }
-                            }
-                        }
-                        
-                        if (legalMoves.length > 0 && state.currentPlayer === 'black') {
-                            updateCoreStatus('Using fallback move');
-                            setTimeout(() => {
-                                const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-                                handleCellClick(randomMove.row, randomMove.col);
+                            } catch (nodeError) {
+                                console.error("Error checking node creation:", nodeError);
                                 updateCoreStatus('Waiting');
-                            }, 1000);
-                        } else {
-                            updateCoreStatus('Waiting');
+                            }
+                        }, 800); // Short delay to show "move found" status
+                    } else {
+                        console.log("No valid move found for AI");
+                        if (!state.gameOver) {
+                            // If no valid moves and game isn't over, might need to handle special case
+                            try {
+                                endGameByNodeCount();
+                            } catch (endGameError) {
+                                console.error("Error ending game:", endGameError);
+                            }
                         }
+                        updateCoreStatus('Waiting');
                     }
-                    
-                    isAIMakingMove = false; // Allow the AI to make another move later
-                }, thinkingDelay); // Random 3-5 second "thinking" delay
-            }, 500); // Initial delay closing parenthesis
-        }
+                } catch (error) {
+                    console.error("Error in AI move:", error);
+                    isAIMakingMove = false;
+                }
+                
+                isAIMakingMove = false; // Allow the AI to make another move later
+            }, thinkingDelay); // Random thinking delay
+        }, 500); // Initial delay to ensure animations complete
     }
+}
+
+// Function to sync the CORE avatars
+function syncCoreAvatars() {
+    const mainCore = document.getElementById('core-avatar');
     
-    // Function to sync the CORE avatars
-    function syncCoreAvatars() {
-        const mainCore = document.getElementById('core-avatar');
-        const headerCore = document.getElementById('core-avatar-header');
-        
-        if (!mainCore || !headerCore) return;
-        
-        // Function to sync status changes
-        const syncStatus = () => {
-            // Copy classes
-            if (mainCore.classList.contains('thinking')) {
-                headerCore.classList.add('thinking');
-            } else {
-                headerCore.classList.remove('thinking');
-            }
-            
-            if (mainCore.classList.contains('success')) {
-                headerCore.classList.add('success');
-            } else {
-                headerCore.classList.remove('success');
-            }
-            
-            if (mainCore.classList.contains('node-created')) {
-                headerCore.classList.add('node-created');
-            } else {
-                headerCore.classList.remove('node-created');
-            }
-            
-            // Copy status text
-            const mainStatus = mainCore.querySelector('.avatar-status');
-            const headerStatus = headerCore.querySelector('.avatar-status');
-            
-            if (mainStatus && headerStatus) {
-                headerStatus.textContent = mainStatus.textContent;
-            }
-        };
-        
-        // Create a MutationObserver to watch for changes
-        const observer = new MutationObserver(syncStatus);
-        
-        // Start observing the main CORE avatar
-        observer.observe(mainCore, {
-            attributes: true,
-            childList: true,
-            subtree: true
-        });
-        
-        // Initial sync
-        syncStatus();
-    }
+    // Just check if main core exists, we don't need headerCore
+    if (!mainCore) return;
     
-    // Call gameLoop() periodically to check for AI moves
-    setInterval(gameLoop, 100); // Check for AI moves every 100ms
+    // No syncing needed since there's only one avatar
+    // This function is now simplified to just handle the main avatar
     
-    // Call syncCoreAvatars to keep the avatars in sync
-    syncCoreAvatars();
+    // We can still keep the MutationObserver in case you want to add
+    // additional behavior or functionality later
+    const observer = new MutationObserver(() => {
+        // Empty callback - no syncing needed, but keeping the observer
+        // in case you need to add functionality later
+    });
+    
+    // Start observing the main CORE avatar
+observer.observe(mainCore, {
+    attributes: true,
+    childList: true,
+    subtree: true
+});
+}
+
+// Call gameLoop() periodically to check for AI moves
+setInterval(gameLoop, 100); // Check for AI moves every 100ms
+
+// Call syncCoreAvatars to keep the avatars in sync
+syncCoreAvatars();
 }); // End of DOMContentLoaded event handler
