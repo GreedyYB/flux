@@ -929,3 +929,198 @@ button:hover {
       margin: 0 5px;
     }
   }
+
+  /* Improved Mobile Responsiveness - Add to end of your CSS file */
+
+/* Base responsive styles - handle overall layout */
+@media screen and (max-width: 768px) {
+    body {
+      padding: 10px;
+    }
+    
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 5px;
+    }
+    
+    h2 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+    
+    /* Make the game container stack vertically */
+    .game-container {
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+    }
+    
+    /* Adjust game board section to take full width */
+    .game-board-section {
+      width: 100%;
+      order: 1;
+    }
+    
+    /* Position game log below the board */
+    .game-log-section {
+      width: 100%;
+      order: 2;
+    }
+    
+    /* Make the messages container shorter on mobile */
+    .messages {
+      height: 250px;
+    }
+    
+    /* Make the game info more compact */
+    .game-info {
+      width: 100%;
+      max-width: 100%;
+      gap: 10px;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    /* Adjust timers to fit mobile layout */
+    .timer {
+      width: auto;
+      min-width: 60px;
+    }
+    
+    /* Adjust score display sizes */
+    .score {
+      padding: 5px 10px;
+      min-height: auto;
+    }
+    
+    /* Adjust CORE avatar size and position */
+    #core-avatar {
+      width: auto;
+      height: auto;
+      position: relative;
+      left: auto;
+      transform: none;
+      margin: 10px auto;
+      display: flex;
+    }
+    
+    /* Adjust controls spacing */
+    .controls button {
+      padding: 8px 12px;
+      margin: 5px;
+      font-size: 0.9rem;
+    }
+    
+    /* Game mode and AI difficulty selectors */
+    .game-mode, .ai-difficulty {
+      flex-direction: column;
+      padding: 8px;
+      gap: 5px;
+    }
+    
+    .game-mode label, .ai-difficulty label {
+      margin-right: 0;
+      margin-bottom: 5px;
+    }
+    
+    /* Timer setup adjustments */
+    .timer-setup {
+      width: 90%;
+      padding: 10px;
+    }
+    
+    .timer-option-row {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .timer-option {
+      margin: 5px 0;
+    }
+  }
+  
+  /* Small phone screens - adjust the game board */
+  @media screen and (max-width: 480px) {
+    /* Make the board responsive */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      gap: 1px;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1/1; /* Keep it square */
+    }
+    
+    /* Make cells responsive squares */
+    .cell {
+      width: auto;
+      height: 0;
+      padding-bottom: 100%; /* Makes cells square */
+      position: relative;
+      font-size: 9px;
+    }
+    
+    /* Reposition ions inside responsive cells */
+    .ion {
+      position: absolute;
+      width: 80%;
+      height: 80%;
+      top: 10%;
+      left: 10%;
+    }
+    
+    /* Adjust row and column labels */
+    .row-label {
+      height: auto;
+      padding-bottom: 100%;
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+    
+    .column-label {
+      width: auto;
+      font-size: 10px;
+    }
+    
+    /* Smaller buttons with less padding */
+    .controls button {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      margin: 3px;
+    }
+    
+    /* Make node markers properly scaled */
+    .protection-1:after,
+    .protection-2:after,
+    .protection-3:after,
+    .protection-4:after {
+      transform: translate(-50%, -50%) scale(0.8);
+    }
+    
+    /* Review controls adjustments */
+    .review-controls {
+      width: 90%;
+    }
+    
+    .review-buttons button {
+      width: 30px;
+      height: 30px;
+      font-size: 14px;
+    }
+    
+    /* Stack the game info elements vertically on very small screens */
+    .game-info {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .left-side, .right-side {
+      flex-direction: column;
+      width: 100%;
+      gap: 5px;
+    }
+  }
