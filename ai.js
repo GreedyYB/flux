@@ -4,7 +4,7 @@
 
 // Check if a move would create a line longer than 4
 function wouldCreateLineTooLong(row, col, player, board) {
-    // Temporarily place the particle
+    // Temporarily place the ion
     const originalValue = board[row][col];
     board[row][col] = { color: player, protectionLevel: 0 };
 
@@ -19,7 +19,7 @@ function wouldCreateLineTooLong(row, col, player, board) {
 
     // Check each direction
     for (const [dr, dc] of directions) {
-        let count = 1;  // Start with the placed particle
+        let count = 1;  // Start with the placed ion
 
         // Count in positive direction
         for (let i = 1; i < 8; i++) {
@@ -72,9 +72,9 @@ function getLegalMoves(board, player) {
     return legalMoves;
 }
 
-// Check if placing a particle would create vectors (lines of 4)
+// Check if placing a ion would create vectors (lines of 4)
 function checkVectorCreation(row, col, player, board) {
-    // Temporarily place a particle
+    // Temporarily place a ion
     const originalValue = board[row][col];
     board[row][col] = { color: player, protectionLevel: 0 };
     
@@ -129,11 +129,11 @@ function checkVectorCreation(row, col, player, board) {
     return vectorsFormed;
 }
 
-// Find particles that are connected (2 or 3 in a row)
-function findConnectedParticles(board, player) {
+// Find ions that are connected (2 or 3 in a row)
+function findConnectedIons(board, player) {
     const connected = {
-        pairs: [], // 2 connected particles
-        triples: [] // 3 connected particles
+        pairs: [], // 2 connected ions
+        triples: [] // 3 connected ions
     };
     
     const directions = [
@@ -170,7 +170,7 @@ function findConnectedParticles(board, player) {
                     }
                 }
                 
-                // Store the connected particles
+                // Store the connected ions
                 if (count === 2) {
                     connected.pairs.push({
                         positions: positions,
@@ -203,7 +203,7 @@ function distanceFromCenter(row, col) {
     return Math.abs(row - 3.5) + Math.abs(col - 3.5);
 }
 
-// Check if a move is adjacent to any existing particles of the player
+// Check if a move is adjacent to any existing ions of the player
 function isAdjacentToOwn(row, col, player, board) {
     for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
@@ -256,10 +256,10 @@ function findExtendPositions(connected, board) {
     return extendMoves;
 }
 
-// Find moves that would block opponent's connected particles
+// Find moves that would block opponent's connected ions
 function findBlockingMoves(board, player) {
     const opponent = player === 'white' ? 'black' : 'white';
-    const opponentConnected = findConnectedParticles(board, opponent);
+    const opponentConnected = findConnectedIons(board, opponent);
     const blockingMoves = [];
     
     // Block opponent's triples (highest priority)
@@ -316,12 +316,12 @@ function getEasyAIMove(board, player) {
         return criticalBlocks[Math.floor(Math.random() * criticalBlocks.length)];
     }
     
-    // Find moves adjacent to own particles
+    // Find moves adjacent to own ions
     const adjacentMoves = legalMoves.filter(move => 
         isAdjacentToOwn(move.row, move.col, player, board));
     
     if (adjacentMoves.length > 0) {
-        console.log("Easy AI: Placing adjacent to own particles");
+        console.log("Easy AI: Placing adjacent to own ions");
         return adjacentMoves[Math.floor(Math.random() * adjacentMoves.length)];
     }
     
@@ -393,8 +393,8 @@ function getMediumAIMove(board, player) {
         return criticalBlocks[Math.floor(Math.random() * criticalBlocks.length)];
     }
     
-    // Find connected particles and positions to extend them
-    const connected = findConnectedParticles(board, player);
+    // Find connected ions and positions to extend them
+    const connected = findConnectedIons(board, player);
     const extendMoves = findExtendPositions(connected, board);
     
     // Extend our own triples
@@ -427,12 +427,12 @@ function getMediumAIMove(board, player) {
         // Prefer center positions
         score -= distanceFromCenter(move.row, move.col) * 5;
         
-        // Prefer positions adjacent to own particles
+        // Prefer positions adjacent to own ions
         if (isAdjacentToOwn(move.row, move.col, player, board)) {
             score += 20;
         }
         
-        // Avoid positions adjacent to opponent particles
+        // Avoid positions adjacent to opponent ions
         if (isAdjacentToOwn(move.row, move.col, opponent, board)) {
             score -= 10;
         }
@@ -512,8 +512,8 @@ function getHardAIMove(board, player) {
         return criticalBlocks[Math.floor(Math.random() * criticalBlocks.length)];
     }
     
-    // Find connected particles and positions to extend them
-    const connected = findConnectedParticles(board, player);
+    // Find connected ions and positions to extend them
+    const connected = findConnectedIons(board, player);
     const extendMoves = findExtendPositions(connected, board);
     
     // Extend our own triples
@@ -550,7 +550,7 @@ function getHardAIMove(board, player) {
         // Prefer center positions
         score -= distanceFromCenter(move.row, move.col) * 5;
         
-        // Prefer positions adjacent to own particles
+        // Prefer positions adjacent to own ions
         if (isAdjacentToOwn(move.row, move.col, player, board)) {
             score += 20;
         }
@@ -580,7 +580,7 @@ function getHardAIMove(board, player) {
             }
             
             // Check if opponent can extend a triple
-            const opConnected = findConnectedParticles(newBoard, opponent);
+            const opConnected = findConnectedIons(newBoard, opponent);
             const hasTriple = opConnected.triples.some(triple => 
                 triple.extendPositions.some(pos => 
                     pos.row === opMove.row && pos.col === opMove.col));
@@ -630,7 +630,7 @@ function simulateMove(board, move, player) {
     // Create deep copy of the board
     const newBoard = JSON.parse(JSON.stringify(board));
     
-    // Place the particle
+    // Place the ion
     newBoard[move.row][move.col] = { color: player, protectionLevel: 0 };
     
     // Check if this creates vectors
@@ -694,8 +694,8 @@ function simulateMove(board, move, player) {
     return newBoard;
 }
 
-// Check for Flux (4 nodes in a line)
-function checkForFlux(board, player) {
+// Check for NExus (4 nodes in a line)
+function checkForNexus(board, player) {
     const directions = [
         [0, 1],  // horizontal
         [1, 0],  // vertical
@@ -729,7 +729,7 @@ function checkForFlux(board, player) {
                 }
                 
                 if (count === 4) {
-                    return true; // Flux found
+                    return true; // Nexus found
                 }
             }
         }
@@ -869,8 +869,8 @@ function evaluateCenterControl(board, player) {
     return control;
 }
 
-// Evaluate potential for forming a Flux
-function evaluateFluxPotential(board, player) {
+// Evaluate potential for forming a Nexus
+function evaluateNexusPotential(board, player) {
     let potential = 0;
     
     // Find all nodes
@@ -884,7 +884,7 @@ function evaluateFluxPotential(board, player) {
         }
     }
     
-    // Not enough nodes for a Flux
+    // Not enough nodes for a Nexus
     if (nodes.length < 2) return 0;
     
     // Check each pair of nodes
@@ -901,7 +901,7 @@ function evaluateFluxPotential(board, player) {
             if ((rowDiff === 0 || colDiff === 0 || rowDiff === colDiff) && 
                 Math.max(rowDiff, colDiff) <= 3) {
                 
-                // Nodes are aligned and within distance to form a Flux
+                // Nodes are aligned and within distance to form a Nexus
                 // Add more value for closer nodes
                 const distance = Math.max(rowDiff, colDiff);
                 potential += (4 - distance) * 10;
@@ -919,7 +919,7 @@ function evaluateFluxPotential(board, player) {
     return potential;
 }
 
-// Evaluate path between two nodes for Flux potential
+// Evaluate path between two nodes for Nexus potential
 function evaluatePathBetweenNodes(board, node1, node2, player) {
     const rowStep = node1.row === node2.row ? 0 : 
                    (node2.row > node1.row ? 1 : -1);
@@ -974,7 +974,7 @@ function evaluatePathBetweenNodes(board, node1, node2, player) {
 
 // Analyze connected pieces (pairs and triples)
 function analyzeConnections(board, player) {
-    const connected = findConnectedParticles(board, player);
+    const connected = findConnectedIons(board, player);
     
     // Improve analysis by checking extendability
     let viablePairs = 0;
@@ -1086,12 +1086,12 @@ function evaluateBoardAdvanced(board, player, opponent) {
     score -= opponentNodes.tripleNodes * 100;
     score -= opponentNodes.quadNodes * 180;
     
-    // 2. Flux potential (nodes that could form a Flux)
-    const playerFluxPotential = evaluateFluxPotential(board, player);
-    const opponentFluxPotential = evaluateFluxPotential(board, opponent);
+    // 2. Nexus potential (nodes that could form a Nexus)
+    const playerNexusPotential = evaluateNexusPotential(board, player);
+    const opponentNexusPotential = evaluateNexusPotential(board, opponent);
     
-    score += playerFluxPotential * 70;
-    score -= opponentFluxPotential * 80;
+    score += playerNexusPotential * 70;
+    score -= opponentNexusPotential * 80;
     
     // 3. Connected pieces analysis
     const playerConnections = analyzeConnections(board, player);
@@ -1119,9 +1119,9 @@ function evaluateBoardAdvanced(board, player, opponent) {
         score += evaluateCenterControl(board, player) * 2;
         score -= evaluateCenterControl(board, opponent) * 1.5;
     } else if (totalPieces > 30) {
-        // Late game: emphasize node connections and Flux potential
-        score += playerFluxPotential * 40;
-        score -= opponentFluxPotential * 50;
+        // Late game: emphasize node connections and Nexus potential
+        score += playerNexusPotential * 40;
+        score -= opponentNexusPotential * 50;
     }
     
     return score;
@@ -1144,12 +1144,12 @@ function alphaBetaMinimax(board, depth, alpha, beta, isMaximizing, player, oppon
         return evaluateBoardAdvanced(board, player, opponent);
     }
     
-    // Check for Flux (game over)
-    if (checkForFlux(board, player)) {
+    // Check for Nexus (game over)
+    if (checkForNexus(board, player)) {
         return 10000; // Player wins
     }
     
-    if (checkForFlux(board, opponent)) {
+    if (checkForNexus(board, opponent)) {
         return -10000; // Opponent wins
     }
     
@@ -1202,9 +1202,9 @@ function getExpertAIMove(board, player) {
     for (const move of legalMoves) {
         const vectorCount = checkVectorCreation(move.row, move.col, player, board);
         if (vectorCount > 0) {
-            // Check if this creates a Flux
+            // Check if this creates a Nexus
             const simulatedBoard = simulateMove(board, move, player);
-            if (checkForFlux(simulatedBoard, player)) {
+            if (checkForNexus(simulatedBoard, player)) {
                 console.log("Expert AI: Taking winning move");
                 return move;
             }
@@ -1215,9 +1215,9 @@ function getExpertAIMove(board, player) {
     for (const move of legalMoves) {
         const vectorCount = checkVectorCreation(move.row, move.col, opponent, board);
         if (vectorCount > 0) {
-            // Check if this would create a Flux for opponent
+            // Check if this would create a Nexus for opponent
             const simulatedBoard = simulateMove(board, move, opponent);
-            if (checkForFlux(simulatedBoard, opponent)) {
+            if (checkForNexus(simulatedBoard, opponent)) {
                 console.log("Expert AI: Blocking opponent's winning move");
                 return move;
             }

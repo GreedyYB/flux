@@ -1,20 +1,23 @@
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
     // Game state
-    const state = {
-        currentPlayer: 'white',
-        board: Array(8).fill().map(() => Array(8).fill(null)),
-        whiteScore: 0,
-        blackScore: 0,
-        gameOver: false,
-        lastMove: null,
-        moveCount: 0,
-        gameStarted: false,
-        // Review mode properties
-        reviewMode: false,
-        moveHistory: [], // Will store board states and other information
-        currentReviewMove: 0
-    };
+// Game state
+const state = {
+    currentPlayer: 'white',
+    board: Array(8).fill().map(() => Array(8).fill(null)),
+    whiteScore: 0,
+    blackScore: 0,
+    gameOver: false,
+    lastMove: null,
+    moveCount: 0,
+    gameStarted: false,
+    // Review mode properties
+    reviewMode: false,
+    moveHistory: [], // Will store board states and other information
+    currentReviewMove: 0,
+    nexusPositions: null,  // Line you added earlier
+    finalBoardState: null  // Add this new line
+};
 
     // Timer state
     const timerState = {
@@ -372,24 +375,24 @@ function updateScores() {
         }
     }
 
-    // Place a particle on the board
-    function placeParticle(row, col, color, protectionLevel = 0) {
+    // Place a ion on the board
+    function placeIon(row, col, color, protectionLevel = 0) {
         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
         if (!cell) return;
         
         // Clear cell contents
         cell.innerHTML = '';
         
-        // Create particle
-        const particle = document.createElement('div');
-        particle.className = `particle ${color}-particle`;
+        // Create ion
+        const ion = document.createElement('div');
+        ion.className = `ion ${color}-ion`;
         
         // Add protection level if needed
         if (protectionLevel > 0) {
-            particle.classList.add(`protection-${protectionLevel}`);
+            ion.classList.add(`protection-${protectionLevel}`);
         }
         
-        cell.appendChild(particle);
+        cell.appendChild(ion);
         
         // Update state
         state.board[row][col] = {
@@ -419,16 +422,16 @@ function updateScores() {
                 cell.innerHTML = '';
                 
                 if (pieceData) {
-                    // Create particle
-                    const particle = document.createElement('div');
-                    particle.className = `particle ${pieceData.color}-particle`;
+                    // Create ion
+                    const ion = document.createElement('div');
+                    ion.className = `ion ${pieceData.color}-ion`;
                     
                     // Add protection level if needed
                     if (pieceData.protectionLevel > 0) {
-                        particle.classList.add(`protection-${pieceData.protectionLevel}`);
+                        ion.classList.add(`protection-${pieceData.protectionLevel}`);
                     }
                     
-                    cell.appendChild(particle);
+                    cell.appendChild(ion);
                 } else {
                     // Show coordinates if no piece
                     cell.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
@@ -601,9 +604,9 @@ function visualizeVector(positions, callback) {
         if (pos.shouldRemove) {
             const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
             if (cell) {
-                const particle = cell.querySelector('.particle');
-                if (particle) {
-                    particle.classList.add('fading');
+                const ion = cell.querySelector('.ion');
+                if (ion) {
+                    ion.classList.add('fading');
                 }
             }
         }
@@ -618,7 +621,7 @@ function visualizeVector(positions, callback) {
             }
         }
         
-        // Update the board (which will remove the faded particles)
+        // Update the board (which will remove the faded ions)
         updateBoard();
         
         // Fade out all lines in the container
@@ -670,19 +673,19 @@ function processVectorsSequentially(vectors, nodeRow, nodeCol, totalVectors, cal
         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
         if (!cell) return;
         
-        const particle = cell.querySelector('.particle');
-        if (!particle) return;
+        const ion = cell.querySelector('.ion');
+        if (!ion) return;
         
         // Function to do a single pulse
         const doPulse = (remaining) => {
             // Remove existing class to restart animation
-            particle.classList.remove('node-pulse');
+            ion.classList.remove('node-pulse');
             
             // Force browser to acknowledge the removal
-            void particle.offsetWidth;
+            void ion.offsetWidth;
             
             // Add class again to trigger animation
-            particle.classList.add('node-pulse');
+            ion.classList.add('node-pulse');
             
             // If more pulses remain, queue the next one
             if (remaining > 1) {
@@ -908,15 +911,15 @@ function handleCellClick(row, col) {
     
     // Check if move would create line longer than 4
     if (wouldCreateLineTooLong(row, col, state.currentPlayer)) {
-        showNotification(`Cannot place here - would create a line longer than ${LINE_LENGTH} particles!`);
+        showNotification(`Cannot place here - would create a line longer than ${LINE_LENGTH} ions!`);
         return;
     }
     
     // Before making the move, save current board state to history
     saveCurrentStateToHistory();
     
-    // Place particle
-    placeParticle(row, col, state.currentPlayer);
+    // Place ion
+    placeIon(row, col, state.currentPlayer);
     
     // Update last move
     state.lastMove = { row, col };
@@ -957,10 +960,10 @@ function handleCellClick(row, col) {
         
         // Process the vectors sequentially with animations
         processVectorsSequentially(linesInfo.vectors, row, col, linesInfo.linesFormed, () => {
-            // After all animations complete, check for Flux
-            const fluxResult = checkForFlux();
-            if (fluxResult) {
-                endGameWithFlux(fluxResult);
+            // After all animations complete, check for Nexus
+            const nexusResult = checkForNexus();
+            if (nexusResult) {
+                endGameWithNexus(nexusResult);
                 return;
             }
             
@@ -983,8 +986,8 @@ function handleCellClick(row, col) {
     }
 }
 
-    // Check for a Flux (line of 4 nodes)
-    function checkForFlux(providedBoard) {
+    // Check for a Nexus (line of 4 nodes)
+    function checkForNexus(providedBoard) {
         // Use the provided board or fall back to state.board
         const board = providedBoard || state.board;
         
@@ -1026,7 +1029,7 @@ function handleCellClick(row, col) {
                         }
                     }
 
-                    // If we found a Flux
+                    // If we found a Nexus
                     if (nodeCount === 4) {
                         state.gameOver = true; // Stop the game immediately
                         return {
@@ -1041,47 +1044,65 @@ function handleCellClick(row, col) {
         return null;
     }
 
-    // End game with a Flux
-function endGameWithFlux(result) {
-    state.gameOver = true;
-    
-    // Stop timer if enabled
-    if (timerState.enabled && timerState.running) {
-        pauseTimer();
-    }
-    
-    // Highlight the winning line
-    for (const pos of result.positions) {
-        const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
-        if (cell) {
-            cell.classList.add('winning-line');
+    // End game with a Nexus
+    function endGameWithNexus(result) {
+        state.gameOver = true;
+        state.nexusPositions = result.positions;  // Line you added earlier
+        state.finalBoardState = JSON.parse(JSON.stringify(state.board));  // Add this new line
+        
+        // Important: Immediately disable all board click events to prevent further moves
+        document.querySelectorAll('.cell').forEach(cell => {
+            // Clone and replace to remove all event listeners
+            const newCell = cell.cloneNode(true);
+            cell.parentNode.replaceChild(newCell, cell);
+        });
+        
+        // Stop timer if enabled
+        if (timerState.enabled && timerState.running) {
+            pauseTimer();
         }
-    }
-    
-    // Show message
-    const winner = result.winner.charAt(0).toUpperCase() + result.winner.slice(1);
-    addSystemMessage(`${winner} achieves a Flux!`);
-    
-    // Show banner
-    if (gameOverBanner) {
-        gameOverBanner.textContent = `Game Over: ${winner} wins with a Flux!`;
-        gameOverBanner.style.display = 'block';
-    }
-    
-    // Remove active player indicators at game end
-    document.querySelector('.white-score').classList.remove('active-player');
-    document.querySelector('.black-score').classList.remove('active-player');
-    
-    // Show review controls
-    enableReviewMode();
-    
-    // Update CORE's status based on the winner
-    if (result.winner === 'black') {
-        updateCoreGameState('game-over-win');
-    } else {
-        updateCoreGameState('game-over-loss');
+        
+        // Highlight the winning line
+for (const pos of result.positions) {
+    const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
+    if (cell) {
+        cell.classList.add('winning-line');
     }
 }
+
+// Show message only if not already shown
+const winner = result.winner.charAt(0).toUpperCase() + result.winner.slice(1);
+const nexusMessage = `${winner} achieves a Nexus!`;
+
+// Check if this message already exists in the game log
+const messageExists = Array.from(document.querySelectorAll('.message-entry'))
+    .some(entry => entry.textContent === nexusMessage);
+
+// Only add the message if it doesn't already exist
+if (!messageExists) {
+    addSystemMessage(nexusMessage);
+}
+
+// Show banner
+if (gameOverBanner) {
+    gameOverBanner.textContent = `Game Over: ${winner} wins with a Nexus!`;
+    gameOverBanner.style.display = 'block';
+}
+
+// Remove active player indicators at game end
+document.querySelector('.white-score').classList.remove('active-player');
+document.querySelector('.black-score').classList.remove('active-player');
+        
+        // Show review controls
+        enableReviewMode();
+        
+        // Update CORE's status based on the winner
+        if (result.winner === 'black') {
+            updateCoreGameState('game-over-win');
+        } else {
+            updateCoreGameState('game-over-loss');
+        }
+    }
 
     // End game by node count
     function endGameByNodeCount() {
@@ -1291,16 +1312,34 @@ function endGameWithFlux(result) {
     function resetGame() {
         // Reset state
         state.currentPlayer = 'white';
-        state.board = Array(8).fill().map(() => Array(8).fill(null));
-        state.whiteScore = 0;
-        state.blackScore = 0;
-        state.gameOver = false;
-        state.lastMove = null;
-        state.moveCount = 0;
-        state.gameStarted = false;
-        state.reviewMode = false;
-        state.moveHistory = [];
-        state.currentReviewMove = 0;
+    state.board = Array(8).fill().map(() => Array(8).fill(null));
+    state.whiteScore = 0;
+    state.blackScore = 0;
+    state.gameOver = false;
+    state.lastMove = null;
+    state.moveCount = 0;
+    state.gameStarted = false;
+    state.reviewMode = false;
+    state.moveHistory = [];
+    state.currentReviewMove = 0;
+    state.nexusPositions = null;  // Reset the Nexus positions
+    state.finalBoardState = null;  // Reset the final board state
+    
+    // Also remove the 'winning-line' class from any cells
+    document.querySelectorAll('.winning-line').forEach(cell => {
+        cell.classList.remove('winning-line');
+    });
+    
+    // Re-add event listeners to all cells (they were removed when the nexus was detected)
+    document.querySelectorAll('.cell').forEach((cell, index) => {
+        const row = Math.floor(index / 8);
+        const col = index % 8;
+        // Remove existing cell to clear any listeners
+        const newCell = cell.cloneNode(true);
+        // Add back the click handler
+        newCell.addEventListener('click', () => handleCellClick(row, col));
+        cell.parentNode.replaceChild(newCell, cell);
+    });
 
           // Hide timers
     if (whiteTimerElement) whiteTimerElement.style.display = 'none';
@@ -1392,15 +1431,43 @@ function endGameWithFlux(result) {
     }
     
     function goToMove(moveNumber) {
-        // Find the closest saved state
-        let targetIndex = 0;
+        // Clear any nexus highlights first
+        document.querySelectorAll('.winning-line').forEach(cell => {
+            cell.classList.remove('winning-line');
+        });
         
         if (moveNumber === 0) {
             // Go to start (empty board)
-            targetIndex = 0;
             restoreEmptyBoard();
+        } else if (moveNumber === state.moveCount && state.finalBoardState && state.nexusPositions) {
+            // Special handling for final move with nexus
+            // Restore from our saved final state instead of history
+            state.board = JSON.parse(JSON.stringify(state.finalBoardState));
+            
+            // Restore player and score information
+            if (state.moveHistory.length > 0) {
+                const lastHistoryState = state.moveHistory[state.moveHistory.length - 1];
+                state.currentPlayer = lastHistoryState.currentPlayer;
+                state.whiteScore = lastHistoryState.whiteScore;
+                state.blackScore = lastHistoryState.blackScore;
+                state.lastMove = lastHistoryState.lastMove ? {...lastHistoryState.lastMove} : null;
+            }
+            
+            // Update the visual display
+            updateBoard();
+            
+            // Add highlights after ensuring board is updated
+            setTimeout(() => {
+                for (const pos of state.nexusPositions) {
+                    const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
+                    if (cell) {
+                        cell.classList.add('winning-line');
+                    }
+                }
+            }, 50);
         } else {
             // Find the history entry for this move
+            let targetIndex = 0;
             for (let i = 0; i < state.moveHistory.length; i++) {
                 if (state.moveHistory[i].moveCount >= moveNumber) {
                     targetIndex = i;
