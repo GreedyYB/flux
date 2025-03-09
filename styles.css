@@ -35,8 +35,10 @@ h2 {
     height: 60px;
     position: relative;
     width: 100%;
-    max-width: 440px;
+    max-width: 650px; /* Increased width to provide more space */
     margin: 0 auto 20px;
+    display: flex;
+    align-items: center; /* Vertically center everything */
 }
 
 .game-info, #timer-setup {
@@ -44,11 +46,12 @@ h2 {
     top: 0;
     left: 0;
     right: 0;
+    bottom: 0; /* Fill the entire header area */
     margin: 0 auto;
     width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: center; /* Center everything vertically */
 }
 
 /* Score display */
@@ -118,16 +121,47 @@ h2 {
 /* Game layout when started */
 body.game-started .game-info {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    position: relative;
+    padding: 0 10px;
 }
 
-body.game-started .left-side,
-body.game-started .right-side {
+/* Position the left side elements */
+body.game-started .left-side {
+    position: absolute;
+    left: 0;
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+/* Position the right side elements */
+body.game-started .right-side {
+    position: absolute;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Create a placeholder for CORE to maintain consistent layout */
+body.game-started .game-info::before {
+    content: '';
+    width: 120px;
+    height: 40px;
+    display: block;
+    margin: 0 auto;
+    visibility: hidden; /* Hide but preserve space */
+}
+
+/* Center CORE avatar under FLUX */
+body.game-started.ai-mode #core-avatar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    margin: 0;
 }
 
 /* Active player indication */
@@ -144,8 +178,6 @@ body.game-started .right-side {
 /* CORE avatar handling */
 body.game-started.ai-mode #core-avatar {
     display: flex !important;
-    position: relative;
-    margin: 0 auto;
 }
 
 /* Timer Setup Section */
@@ -206,28 +238,32 @@ select {
 /* ==================== BOARD LAYOUT ==================== */
 
 .board-container {
+    width: 450px; /* Fixed width to accommodate the board + padding + row labels */
+    margin: 0 auto 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 440px;
-    margin: 0 auto 20px;
 }
 
 .board-with-labels {
     display: flex;
     flex-direction: column;
+    align-items: flex-start; /* Align to the left edge */
 }
 
 .board-with-row-labels {
     display: flex;
     width: 100%;
+    justify-content: center;
+    margin: 0 auto;
 }
 
 .row-labels {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    width: 8%;
+    width: 30px; /* Fixed width for row labels */
+    margin-right: 5px; /* Add a small margin between labels and board */
 }
 
 .row-label {
@@ -241,13 +277,16 @@ select {
 }
 
 .column-labels {
-    display: flex;
-    margin-left: 8%;
-    width: 92%;
+    display: grid;
+    grid-template-columns: repeat(8, 50px); /* Match the grid cell size */
+    gap: 2px; /* Match the board gap */
+    width: 410px; /* 8 columns × 50px + 7 gaps × 2px */
+    margin-left: 35px; /* Match row labels width + margin */
+    padding: 5px; /* Match the board padding */
+    box-sizing: border-box;
 }
 
 .column-label {
-    flex: 1;
     text-align: center;
     font-weight: bold;
     color: #fff;
@@ -262,7 +301,9 @@ select {
     padding: 5px;
     border-radius: 5px;
     position: relative;
-    width: 92%;
+    margin: 0;
+    width: auto; /* Let the grid determine its width naturally */
+    box-sizing: border-box;
 }
 
 .cell {
