@@ -862,316 +862,235 @@ button:hover {
         font-size: 10px;
     }
 }
-/* Add this to your styles.css file */
 
-/* Responsive viewport meta tag - add to HTML head if not present */
-/* <meta name="viewport" content="width=device-width, initial-scale=1.0"> */
-
-/* Base responsive styles */
+/* Improved Mobile Responsiveness */
 @media screen and (max-width: 768px) {
-    /* Make the game container stack vertically */
-    .game-container {
-      flex-direction: column;
-      gap: 20px;
-    }
-    
-    /* Adjust the game info layout */
-    .game-info {
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    
-    /* Make the board fit the screen width */
-    .board {
-      width: 100%;
-      max-width: 100vmin; /* Use viewport minimum for square sizing */
-      grid-template-columns: repeat(8, 1fr);
-      grid-template-rows: repeat(8, 1fr);
-      gap: 1px;
-    }
-    
-    /* Adjust cell size */
-    .cell {
-      width: auto; /* Let grid layout control size */
-      height: 0;
-      padding-bottom: 100%; /* Make cells square */
-      font-size: 10px; /* Smaller coordinates text */
-    }
-    
-    /* Adjust ions to fit cells */
-    .ion {
-      width: 85%;
-      height: 85%;
-    }
-    
-    /* Position the game log below the board */
-    .game-log-section {
-      width: 100%;
-    }
-    
-    /* Adjust controls to fit smaller screens */
-    .controls button {
-      padding: 8px 12px;
-      font-size: 14px;
-    }
+  body {
+    padding: 10px;
+    max-width: 100%;
   }
   
-  /* Even smaller screens (phones) */
-  @media screen and (max-width: 480px) {
-    /* Further reduce sizes */
-    .cell {
-      font-size: 8px;
-    }
-    
-    .controls button {
-      padding: 6px 10px;
-      font-size: 12px;
-      margin: 0 5px;
-    }
-  }
-
-  /* Improved Mobile Responsiveness with Larger Square Cells */
-
-@media screen and (max-width: 768px) {
-    body {
-      padding: 10px;
-      max-width: 100%;
-    }
-    
-    /* Make the game container stack vertically */
-    .game-container {
-      flex-direction: column;
-      gap: 15px;
-      width: 100%;
-    }
-    
-    /* Keep game info in a horizontal row */
-    .game-info {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      max-width: 100%;
-      margin-bottom: 15px;
-    }
-    
-    .left-side, .right-side {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    /* Make the board-container take more screen width */
-    .board-container {
-      width: 95%;
-      margin: 0 auto;
-    }
-    
-    /* Ensure the board with row labels fills available width */
-    .board-with-row-labels {
-      display: flex;
-      width: 100%;
-    }
-    
-    /* Make row labels narrower to give more space to the board */
-    .row-labels {
-      width: 8%;
-    }
-    
-    .row-label {
-      width: 100%;
-      height: 0;
-      padding-bottom: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-    }
-    
-    /* Make the board fill the remaining width (92%) */
-    .board {
-      width: 92%;
-      height: auto;
-      aspect-ratio: 1/1; /* Keep the overall board square */
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      grid-template-rows: repeat(8, 1fr);
-      gap: 2px;
-      padding: 3px;
-    }
-    
-    /* Make each cell a proper square */
-    .cell {
-      width: 100%;
-      height: 0;
-      padding-bottom: 100%; /* This makes each cell square */
-      position: relative;
-      font-size: 10px;
-    }
-    
-    /* Position ions centered in cells */
-    .ion {
-      position: absolute;
-      width: 80%;
-      height: 80%;
-      top: 10%;
-      left: 10%;
-    }
-    
-    /* Adjust column labels to match cell widths */
-    .column-labels {
-      margin-left: 8%; /* Match row-labels width */
-      width: 92%; /* Match board width */
-      display: flex;
-    }
-    
-    .column-label {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-    }
-    
-    /* Position game log section below board */
-    .game-log-section {
-      width: 100%;
-    }
-    
-    /* Make the messages container shorter on mobile */
-    .messages {
-      height: 200px;
-    }
-    
-    /* Adjust controls buttons */
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    
-    .controls button {
-      padding: 8px 12px;
-      margin: 5px;
-      font-size: 0.9rem;
-    }
-  
-    /* Center CORE avatar */
-    #core-avatar {
-      position: relative;
-      left: auto;
-      transform: none;
-      margin: 0 auto;
-      display: flex;
-    }
-    
-    /* Adjust score display sizes */
-    .score {
-      padding: 6px 10px;
-      min-height: auto;
-      font-size: 0.9rem;
-    }
-    
-    /* Make timer display compact but readable */
-    .timer {
-      min-width: 70px;
-      padding: 6px;
-    }
-    
-    /* Timer setup adjustments */
-    .timer-setup {
-      width: 100%;
-      max-width: none;
-      padding: 10px;
-    }
+  /* Hide the subtitle */
+  h2 {
+    display: none;
   }
   
-  /* Small phone screens - extra adjustments */
-  @media screen and (max-width: 480px) {
-    /* Further adjust controls for very small screens */
-    .controls button {
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      margin: 3px;
-    }
-    
-    /* Make score and timer text slightly smaller */
-    .score, .timer-value {
-      font-size: 0.85rem;
-    }
-    
-    /* Make the timer labels more compact */
-    .timer-label {
-      font-size: 0.75rem;
-    }
-    
-    /* Ensure small screens keep game info in a row */
-    .game-info {
-      flex-wrap: nowrap;
-      gap: 5px;
-    }
+  /* Make the game container stack vertically */
+  .game-container {
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+  }
+  
+  /* Keep game info in a horizontal row */
+  .game-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 15px;
+  }
+  
+  .left-side, .right-side {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* Make the board-container take more screen width */
+  .board-container {
+    width: 95%;
+    margin: 0 auto;
+  }
+  
+  /* Ensure the board with row labels fills available width */
+  .board-with-row-labels {
+    display: flex;
+    width: 100%;
+  }
+  
+  /* Fix row labels (1-8) to be evenly spaced on the left side */
+  .row-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: auto;
+    width: 8%;
+  }
+  
+  .row-label {
+    height: auto;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #fff;
+    width: 100%;
+    padding: 0;
+  }
+  
+  /* Make the board fill the remaining width (92%) */
+  .board {
+    width: 92%;
+    height: auto;
+    aspect-ratio: 1/1; /* Keep the overall board square */
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 2px;
+    padding: 3px;
+  }
+  
+  /* Make each cell a proper square */
+  .cell {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%; /* This makes each cell square */
+    position: relative;
+    font-size: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Fix the cell text issue */
+  .cell::before, .cell::after {
+    content: none !important;
+  }
+  
+  /* Position ions properly in the responsive cells */
+  .ion {
+    position: absolute;
+    width: 80%;
+    height: 80%;
+    top: 10%;
+    left: 10%;
+  }
+  
+  /* Adjust column labels to match cell widths */
+  .column-labels {
+    margin-left: 8%; /* Match row-labels width */
+    width: 92%; /* Match board width */
+    display: flex;
+  }
+  
+  .column-label {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+  }
+  
+  /* Position game log section below board */
+  .game-log-section {
+    width: 100%;
+  }
+  
+  /* Make the messages container shorter on mobile */
+  .messages {
+    height: 200px;
+  }
+  
+  /* Adjust controls buttons */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .controls button {
+    padding: 8px 12px;
+    margin: 5px;
+    font-size: 0.9rem;
   }
 
-  /* Additional mobile adjustments */
-
-/* Fix row numbering alignment and cell content positioning */
-@media screen and (max-width: 768px) {
-    /* Fix the row labels so they align with their respective rows */
-    .row-label {
-      width: 100%;
-      height: 0;
-      padding-bottom: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-    
-    /* Center the text properly inside each cell */
-    .cell {
-      width: 100%;
-      height: 0;
-      padding-bottom: 100%;
-      position: relative;
-      font-size: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    /* Ensure cell text is absolutely centered */
-    .cell::before {
-      content: attr(data-row) attr(data-col);
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1;
-    }
-    
-    /* Fix the column labels so they align with their respective columns */
-    .column-label {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-    }
-    
-    /* Hide the subtitle by default */
-    h2 {
-      display: none;
-    }
-    
-    /* Reposition CORE avatar when in AI mode */
-    #core-avatar.in-header {
-      position: relative;
-      display: none; /* Hidden by default */
-      margin: 10px auto 15px;
-      width: auto;
-      left: auto;
-      transform: none;
-    }
-    
-    /* When game mode is AI, show the CORE avatar in header */
-    .ai-mode #core-avatar.in-header {
-      display: flex;
-    }
+  /* CORE Avatar in header */
+  #core-avatar-header {
+    display: none;
+    margin: 10px auto;
+    width: auto;
   }
+  
+  /* Only show CORE when in AI mode */
+  .ai-mode #core-avatar-header {
+    display: flex;
+  }
+  
+  /* Center the CORE avatar in both game info area and header */
+  #core-avatar {
+    position: relative;
+    left: auto;
+    transform: none;
+    margin: 0 auto;
+    display: none;
+  }
+  
+  .ai-mode #core-avatar {
+    display: flex;
+  }
+  
+  /* Adjust score display sizes */
+  .score {
+    padding: 6px 10px;
+    min-height: auto;
+    font-size: 0.9rem;
+  }
+  
+  /* Make timer display compact but readable */
+  .timer {
+    min-width: 70px;
+    padding: 6px;
+  }
+  
+  /* Timer setup adjustments */
+  .timer-setup {
+    width: 100%;
+    max-width: none;
+    padding: 10px;
+  }
+  
+  /* Game mode and AI difficulty selectors */
+  .game-mode, .ai-difficulty {
+    flex-direction: row;
+    padding: 8px;
+    margin: 5px 0;
+  }
+  
+  .game-mode label, .ai-difficulty label {
+    margin-right: 10px;
+    margin-bottom: 0;
+  }
+}
+
+/* Small phone screens - extra adjustments */
+@media screen and (max-width: 480px) {
+  /* Further adjust controls for very small screens */
+  .controls button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    margin: 3px;
+  }
+  
+  /* Make score and timer text slightly smaller */
+  .score, .timer-value {
+    font-size: 0.85rem;
+  }
+  
+  /* Make the timer labels more compact */
+  .timer-label {
+    font-size: 0.75rem;
+  }
+  
+  /* Ensure small screens keep game info in a row */
+  .game-info {
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+  
+  /* Smaller text in cells */
+  .cell {
+    font-size: 9px;
+  }
+}

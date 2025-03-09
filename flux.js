@@ -1,23 +1,23 @@
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
     // Game state
-// Game state
-const state = {
-    currentPlayer: 'white',
-    board: Array(8).fill().map(() => Array(8).fill(null)),
-    whiteScore: 0,
-    blackScore: 0,
-    gameOver: false,
-    lastMove: null,
-    moveCount: 0,
-    gameStarted: false,
-    // Review mode properties
-    reviewMode: false,
-    moveHistory: [], // Will store board states and other information
-    currentReviewMove: 0,
-    nexusPositions: null,  // Line you added earlier
-    finalBoardState: null  // Add this new line
-};
+    // Game state
+    const state = {
+        currentPlayer: 'white',
+        board: Array(8).fill().map(() => Array(8).fill(null)),
+        whiteScore: 0,
+        blackScore: 0,
+        gameOver: false,
+        lastMove: null,
+        moveCount: 0,
+        gameStarted: false,
+        // Review mode properties
+        reviewMode: false,
+        moveHistory: [], // Will store board states and other information
+        currentReviewMove: 0,
+        nexusPositions: null,  // Line you added earlier
+        finalBoardState: null  // Add this new line
+    };
 
     // Timer state
     const timerState = {
@@ -59,21 +59,32 @@ const state = {
     const notificationElement = getElement('notification');
 
     // Add this function after your other DOM element references
-function updateAIDifficultyVisibility(gameMode) {
-    const aiDifficultyContainer = document.querySelector('.ai-difficulty');
-    if (!aiDifficultyContainer) return;
-    
-    // Only show AI difficulty selector when in AI mode
-    if (gameMode === 'ai') {
-        aiDifficultyContainer.style.display = 'flex';
-    } else {
-        aiDifficultyContainer.style.display = 'none';
+    function updateAIDifficultyVisibility(gameMode) {
+        const aiDifficultyContainer = document.querySelector('.ai-difficulty');
+        if (!aiDifficultyContainer) return;
+        
+        // Only show AI difficulty selector when in AI mode
+        if (gameMode === 'ai') {
+            aiDifficultyContainer.style.display = 'flex';
+        } else {
+            aiDifficultyContainer.style.display = 'none';
+        }
     }
-}
+
+    // Add this function to control the ai-mode class on the body
+    function updateGameModeClass(gameMode) {
+        // Add or remove the ai-mode class from the body
+        if (gameMode === 'ai') {
+            document.body.classList.add('ai-mode');
+        } else {
+            document.body.classList.remove('ai-mode');
+        }
+    }
     
     // CORE avatar elements
     const coreAvatar = getElement('core-avatar');
     const coreStatus = coreAvatar ? coreAvatar.querySelector('.avatar-status') : null;
+    const coreAvatarHeader = getElement('core-avatar-header');
     
     // Review controls
     const reviewControlsElement = getElement('review-controls');
@@ -105,30 +116,21 @@ function updateAIDifficultyVisibility(gameMode) {
         return;
     }
 
-    // Function to control game mode class for displaying CORE in header
-function updateGameModeClass(gameMode) {
-    // Add or remove the ai-mode class from the body
-    if (gameMode === 'ai') {
-        document.body.classList.add('ai-mode');
-    } else {
-        document.body.classList.remove('ai-mode');
-    }
-}
-
     // Set up game mode change handler
-if (gameModeSelect && coreAvatar) {
-    // Initial update based on selected mode
-    updateCoreVisibility(gameModeSelect.value);
-    updateAIDifficultyVisibility(gameModeSelect.value);
-    updateGameModeClass(gameModeSelect.value); // Add this line
-    
-    // Add event listener for changes
-    gameModeSelect.addEventListener('change', function() {
-        updateCoreVisibility(this.value);
-        updateAIDifficultyVisibility(this.value);
-        updateGameModeClass(this.value); // Add this line
-    });
-}
+    if (gameModeSelect && coreAvatar) {
+        // Initial update based on selected mode
+        updateCoreVisibility(gameModeSelect.value);
+        updateAIDifficultyVisibility(gameModeSelect.value);
+        updateGameModeClass(gameModeSelect.value); // Add this line
+        
+        // Add event listener for changes
+        gameModeSelect.addEventListener('change', function() {
+            const mode = this.value;
+            updateCoreVisibility(mode);
+            updateAIDifficultyVisibility(mode);
+            updateGameModeClass(mode); // Add this line
+        });
+    }
 
     // Function to control CORE's visibility
     function updateCoreVisibility(gameMode) {
@@ -200,61 +202,61 @@ if (gameModeSelect && coreAvatar) {
     }
 
     // Initialize board
-function initializeBoard() {
-    // Create column labels (A-H)
-    columnLabelsElement.innerHTML = '';
-    for (let col = 0; col < BOARD_SIZE; col++) {
-        const label = document.createElement('div');
-        label.className = 'column-label';
-        label.textContent = String.fromCharCode(65 + col);
-        columnLabelsElement.appendChild(label);
-    }
-    
-    // Create row labels (8-1)
-    rowLabelsElement.innerHTML = '';
-    for (let row = 0; row < BOARD_SIZE; row++) {
-        const label = document.createElement('div');
-        label.className = 'row-label';
-        label.textContent = BOARD_SIZE - row;
-        rowLabelsElement.appendChild(label);
-    }
-    
-    // Create cells
-    boardElement.innerHTML = '';
-    
-    // Create container for vector lines
-    const lineContainer = document.createElement('div');
-    lineContainer.className = 'vector-line-container';
-    boardElement.appendChild(lineContainer);
-    
-    for (let row = 0; row < BOARD_SIZE; row++) {
+    function initializeBoard() {
+        // Create column labels (A-H)
+        columnLabelsElement.innerHTML = '';
         for (let col = 0; col < BOARD_SIZE; col++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.row = row;
-            cell.dataset.col = col;
-            cell.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
-            cell.addEventListener('click', () => handleCellClick(row, col));
-            boardElement.appendChild(cell);
+            const label = document.createElement('div');
+            label.className = 'column-label';
+            label.textContent = String.fromCharCode(65 + col);
+            columnLabelsElement.appendChild(label);
+        }
+        
+        // Create row labels (8-1)
+        rowLabelsElement.innerHTML = '';
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.textContent = BOARD_SIZE - row;
+            rowLabelsElement.appendChild(label);
+        }
+        
+        // Create cells
+        boardElement.innerHTML = '';
+        
+        // Create container for vector lines
+        const lineContainer = document.createElement('div');
+        lineContainer.className = 'vector-line-container';
+        boardElement.appendChild(lineContainer);
+        
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                cell.textContent = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
+                cell.addEventListener('click', () => handleCellClick(row, col));
+                boardElement.appendChild(cell);
+            }
+        }
+
+        // Set initial active player indicator ONLY if game is in progress
+        if (state.gameStarted && !state.gameOver) {
+            document.querySelector('.white-score').classList.add('active-player');
+            document.querySelector('.black-score').classList.remove('active-player');
+        } else {
+            // Remove active player styling when not in active game
+            document.querySelector('.white-score').classList.remove('active-player');
+            document.querySelector('.black-score').classList.remove('active-player');
         }
     }
 
-    // Set initial active player indicator ONLY if game is in progress
-    if (state.gameStarted && !state.gameOver) {
-        document.querySelector('.white-score').classList.add('active-player');
-        document.querySelector('.black-score').classList.remove('active-player');
-    } else {
-        // Remove active player styling when not in active game
-        document.querySelector('.white-score').classList.remove('active-player');
-        document.querySelector('.black-score').classList.remove('active-player');
+    // Update scores display
+    function updateScores() {
+        if (whiteScoreElement) whiteScoreElement.textContent = state.whiteScore;
+        if (blackScoreElement) blackScoreElement.textContent = state.blackScore;
     }
-}
-
-// Update scores display
-function updateScores() {
-    if (whiteScoreElement) whiteScoreElement.textContent = state.whiteScore;
-    if (blackScoreElement) blackScoreElement.textContent = state.blackScore;
-}
 
     // Timer functions
     function formatTime(seconds) {
@@ -466,219 +468,219 @@ function updateScores() {
     // ==================== VECTOR VISUALIZATION FUNCTIONS ====================
 
     // Create a visual vector line
-function createVectorLine(positions, direction) {
-    // Clear any existing lines
-    let lineContainer = document.querySelector('.vector-line-container');
-    if (lineContainer) {
-        lineContainer.innerHTML = '';
-    } else {
-        lineContainer = document.createElement('div');
-        lineContainer.className = 'vector-line-container';
-        const board = document.querySelector('.board');
-        if (board) board.appendChild(lineContainer);
-    }
-    
-    // Sort positions to ensure we have the right order
-    let sortedPositions = [];
-    
-    switch(direction) {
-        case 'horizontal':
-            // Sort left to right
-            sortedPositions = [...positions].sort((a, b) => a.col - b.col);
-            break;
-        case 'vertical':
-            // Sort top to bottom
-            sortedPositions = [...positions].sort((a, b) => a.row - b.row);
-            break;
-        case 'diagonal-right':
-            // Sort top-left to bottom-right
-            sortedPositions = [...positions].sort((a, b) => {
-                if (a.row === b.row) return a.col - b.col;
-                return a.row - b.row;
-            });
-            break;
-        case 'diagonal-left':
-            // Sort top-right to bottom-left
-            sortedPositions = [...positions].sort((a, b) => {
-                if (a.row === b.row) return b.col - a.col;
-                return a.row - b.row;
-            });
-            break;
-    }
-    
-    // Filter out positions that aren't part of the vector (we only want exactly 4)
-    // Vector positions should be consecutive in the sorted order
-    if (sortedPositions.length > 4) {
-        // If somehow we have more than 4, take the first 4
-        sortedPositions = sortedPositions.slice(0, 4);
-    }
-    
-    // Verify we have exactly 4 positions for the vector
-    if (sortedPositions.length !== 4) {
-        console.error("Vector doesn't have exactly 4 positions:", sortedPositions);
-        return null;
-    }
-    
-    // Create individual line segments between consecutive cells
-    for (let i = 0; i < sortedPositions.length - 1; i++) {
-        const pos1 = sortedPositions[i];
-        const pos2 = sortedPositions[i + 1];
+    function createVectorLine(positions, direction) {
+        // Clear any existing lines
+        let lineContainer = document.querySelector('.vector-line-container');
+        if (lineContainer) {
+            lineContainer.innerHTML = '';
+        } else {
+            lineContainer = document.createElement('div');
+            lineContainer.className = 'vector-line-container';
+            const board = document.querySelector('.board');
+            if (board) board.appendChild(lineContainer);
+        }
         
-        // Get the cells
-        const cell1 = document.querySelector(`.cell[data-row="${pos1.row}"][data-col="${pos1.col}"]`);
-        const cell2 = document.querySelector(`.cell[data-row="${pos2.row}"][data-col="${pos2.col}"]`);
+        // Sort positions to ensure we have the right order
+        let sortedPositions = [];
         
-        if (!cell1 || !cell2) continue;
+        switch(direction) {
+            case 'horizontal':
+                // Sort left to right
+                sortedPositions = [...positions].sort((a, b) => a.col - b.col);
+                break;
+            case 'vertical':
+                // Sort top to bottom
+                sortedPositions = [...positions].sort((a, b) => a.row - b.row);
+                break;
+            case 'diagonal-right':
+                // Sort top-left to bottom-right
+                sortedPositions = [...positions].sort((a, b) => {
+                    if (a.row === b.row) return a.col - b.col;
+                    return a.row - b.row;
+                });
+                break;
+            case 'diagonal-left':
+                // Sort top-right to bottom-left
+                sortedPositions = [...positions].sort((a, b) => {
+                    if (a.row === b.row) return b.col - a.col;
+                    return a.row - b.row;
+                });
+                break;
+        }
         
-        // Create line segment
-        createLineSegment(cell1, cell2, lineContainer, direction);
+        // Filter out positions that aren't part of the vector (we only want exactly 4)
+        // Vector positions should be consecutive in the sorted order
+        if (sortedPositions.length > 4) {
+            // If somehow we have more than 4, take the first 4
+            sortedPositions = sortedPositions.slice(0, 4);
+        }
+        
+        // Verify we have exactly 4 positions for the vector
+        if (sortedPositions.length !== 4) {
+            console.error("Vector doesn't have exactly 4 positions:", sortedPositions);
+            return null;
+        }
+        
+        // Create individual line segments between consecutive cells
+        for (let i = 0; i < sortedPositions.length - 1; i++) {
+            const pos1 = sortedPositions[i];
+            const pos2 = sortedPositions[i + 1];
+            
+            // Get the cells
+            const cell1 = document.querySelector(`.cell[data-row="${pos1.row}"][data-col="${pos1.col}"]`);
+            const cell2 = document.querySelector(`.cell[data-row="${pos2.row}"][data-col="${pos2.col}"]`);
+            
+            if (!cell1 || !cell2) continue;
+            
+            // Create line segment
+            createLineSegment(cell1, cell2, lineContainer, direction);
+        }
+        
+        return lineContainer;
     }
-    
-    return lineContainer;
-}
 
-// Create a line segment between two cells
-function createLineSegment(cell1, cell2, container, direction) {
-    const cell1Rect = cell1.getBoundingClientRect();
-    const cell2Rect = cell2.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    
-    const line = document.createElement('div');
-    line.className = `vector-line ${direction}`;
-    
-    // Calculate positions relative to the container
-    const x1 = cell1Rect.left + (cell1Rect.width / 2) - containerRect.left;
-    const y1 = cell1Rect.top + (cell1Rect.height / 2) - containerRect.top;
-    const x2 = cell2Rect.left + (cell2Rect.width / 2) - containerRect.left;
-    const y2 = cell2Rect.top + (cell2Rect.height / 2) - containerRect.top;
-    
-    // Calculate length and angle
-    const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-    
-    // Set line properties
-    line.style.width = `${length}px`;
-    line.style.left = `${x1}px`;
-    line.style.top = `${y1}px`;
-    line.style.transform = `rotate(${angle}deg)`;
-    line.style.transformOrigin = 'left center';
-    
-    // Add the line to the container
-    container.appendChild(line);
-    
-    return line;
-}
+    // Create a line segment between two cells
+    function createLineSegment(cell1, cell2, container, direction) {
+        const cell1Rect = cell1.getBoundingClientRect();
+        const cell2Rect = cell2.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        const line = document.createElement('div');
+        line.className = `vector-line ${direction}`;
+        
+        // Calculate positions relative to the container
+        const x1 = cell1Rect.left + (cell1Rect.width / 2) - containerRect.left;
+        const y1 = cell1Rect.top + (cell1Rect.height / 2) - containerRect.top;
+        const x2 = cell2Rect.left + (cell2Rect.width / 2) - containerRect.left;
+        const y2 = cell2Rect.top + (cell2Rect.height / 2) - containerRect.top;
+        
+        // Calculate length and angle
+        const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+        
+        // Set line properties
+        line.style.width = `${length}px`;
+        line.style.left = `${x1}px`;
+        line.style.top = `${y1}px`;
+        line.style.transform = `rotate(${angle}deg)`;
+        line.style.transformOrigin = 'left center';
+        
+        // Add the line to the container
+        container.appendChild(line);
+        
+        return line;
+    }
 
     // Visualize a vector with animation
-function visualizeVector(positions, callback) {
-    if (positions.length < 4) {
-        console.warn("Vector doesn't have the right number of positions:", positions);
-        if (callback) callback();
-        return;
-    }
-    
-    // Explicitly ensure we have exactly 4 positions
-    const vectorPositions = positions.slice(0, 4);
-    
-    // Determine direction
-    let direction;
-    
-    // Check if all positions are in the same row
-    if (vectorPositions.every(p => p.row === vectorPositions[0].row)) {
-        direction = 'horizontal';
-    } 
-    // Check if all positions are in the same column
-    else if (vectorPositions.every(p => p.col === vectorPositions[0].col)) {
-        direction = 'vertical';
-    }
-    // Check if it's a diagonal
-    else {
-        // Sort by row
-        const sorted = [...vectorPositions].sort((a, b) => a.row - b.row);
-        
-        // If columns increase as rows increase, it's diagonal-right
-        if (sorted[0].col < sorted[sorted.length-1].col) {
-            direction = 'diagonal-right';
-        } else {
-            direction = 'diagonal-left';
+    function visualizeVector(positions, callback) {
+        if (positions.length < 4) {
+            console.warn("Vector doesn't have the right number of positions:", positions);
+            if (callback) callback();
+            return;
         }
-    }
-    
-    // Create line
-    const lineContainer = createVectorLine(vectorPositions, direction);
-    if (!lineContainer) {
-        if (callback) callback();
-        return;
-    }
-    
-    // Show line and mark pieces to fade simultaneously
-    for (const pos of positions) {
-        if (pos.shouldRemove) {
-            const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
-            if (cell) {
-                const ion = cell.querySelector('.ion');
-                if (ion) {
-                    ion.classList.add('fading');
+        
+        // Explicitly ensure we have exactly 4 positions
+        const vectorPositions = positions.slice(0, 4);
+        
+        // Determine direction
+        let direction;
+        
+        // Check if all positions are in the same row
+        if (vectorPositions.every(p => p.row === vectorPositions[0].row)) {
+            direction = 'horizontal';
+        } 
+        // Check if all positions are in the same column
+        else if (vectorPositions.every(p => p.col === vectorPositions[0].col)) {
+            direction = 'vertical';
+        }
+        // Check if it's a diagonal
+        else {
+            // Sort by row
+            const sorted = [...vectorPositions].sort((a, b) => a.row - b.row);
+            
+            // If columns increase as rows increase, it's diagonal-right
+            if (sorted[0].col < sorted[sorted.length-1].col) {
+                direction = 'diagonal-right';
+            } else {
+                direction = 'diagonal-left';
+            }
+        }
+        
+        // Create line
+        const lineContainer = createVectorLine(vectorPositions, direction);
+        if (!lineContainer) {
+            if (callback) callback();
+            return;
+        }
+        
+        // Show line and mark pieces to fade simultaneously
+        for (const pos of positions) {
+            if (pos.shouldRemove) {
+                const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
+                if (cell) {
+                    const ion = cell.querySelector('.ion');
+                    if (ion) {
+                        ion.classList.add('fading');
+                    }
                 }
             }
         }
-    }
-    
-    // After 1 second (fade duration), remove pieces and fade the line
-    setTimeout(() => {
-        // Remove faded pieces from state
-        for (const pos of positions) {
-            if (pos.shouldRemove) {
-                state.board[pos.row][pos.col] = null;
-            }
-        }
         
-        // Update the board (which will remove the faded ions)
-        updateBoard();
-        
-        // Fade out all lines in the container
-        const lines = lineContainer.querySelectorAll('.vector-line');
-        lines.forEach(line => {
-            line.classList.add('fading');
-        });
-        
-        // Remove lines after fade finishes and run callback
+        // After 1 second (fade duration), remove pieces and fade the line
         setTimeout(() => {
-            if (lineContainer && lineContainer.parentNode) {
-                lineContainer.parentNode.removeChild(lineContainer);
+            // Remove faded pieces from state
+            for (const pos of positions) {
+                if (pos.shouldRemove) {
+                    state.board[pos.row][pos.col] = null;
+                }
             }
-            if (callback) callback();
-        }, 1000); // Line fade duration
-        
-    }, 1000); // Piece fade duration
-}
+            
+            // Update the board (which will remove the faded ions)
+            updateBoard();
+            
+            // Fade out all lines in the container
+            const lines = lineContainer.querySelectorAll('.vector-line');
+            lines.forEach(line => {
+                line.classList.add('fading');
+            });
+            
+            // Remove lines after fade finishes and run callback
+            setTimeout(() => {
+                if (lineContainer && lineContainer.parentNode) {
+                    lineContainer.parentNode.removeChild(lineContainer);
+                }
+                if (callback) callback();
+            }, 1000); // Line fade duration
+            
+        }, 1000); // Piece fade duration
+    }
 
     // Process vectors with animations sequentially
-function processVectorsSequentially(vectors, nodeRow, nodeCol, totalVectors, callback) {
-    if (vectors.length === 0) {
-        if (callback) callback();
-        return;
-    }
-    
-    // Process the first vector with animations
-    const vector = vectors[0];
-    visualizeVector(vector.positions, () => {
-        // After this vector's animations, process the next one
-        processVectorsSequentially(vectors.slice(1), nodeRow, nodeCol, totalVectors, () => {
-            // After all vectors are processed, pulse the node
-            pulseNode(nodeRow, nodeCol, totalVectors);
-            
-            // Pulse the score - determine correct player from board state
-            const nodeCell = state.board[nodeRow][nodeCol];
-            if (nodeCell && nodeCell.color) {
-                pulseScore(nodeCell.color);
-            }
-            
-            // Then call the callback
+    function processVectorsSequentially(vectors, nodeRow, nodeCol, totalVectors, callback) {
+        if (vectors.length === 0) {
             if (callback) callback();
+            return;
+        }
+        
+        // Process the first vector with animations
+        const vector = vectors[0];
+        visualizeVector(vector.positions, () => {
+            // After this vector's animations, process the next one
+            processVectorsSequentially(vectors.slice(1), nodeRow, nodeCol, totalVectors, () => {
+                // After all vectors are processed, pulse the node
+                pulseNode(nodeRow, nodeCol, totalVectors);
+                
+                // Pulse the score - determine correct player from board state
+                const nodeCell = state.board[nodeRow][nodeCol];
+                if (nodeCell && nodeCell.color) {
+                    pulseScore(nodeCell.color);
+                }
+                
+                // Then call the callback
+                if (callback) callback();
+            });
         });
-    });
-}
+    }
 
     // Pulse animation for a node
     function pulseNode(row, col, count = 1) {
@@ -896,107 +898,107 @@ function processVectorsSequentially(vectors, nodeRow, nodeCol, totalVectors, cal
     }
 
     // Handle cell click
-function handleCellClick(row, col) {
-    // If in review mode, ignore clicks on the board
-    if (state.reviewMode) {
-        showNotification("You are in review mode. Use the review controls to navigate the game.");
-        return;
-    }
-    
-    // Check if game is not started yet
-    if (!state.gameStarted) {
-        showNotification("Please click 'Start Game' to begin playing.");
-        return;
-    }
-    
-    // Check if game is over
-    if (state.gameOver) {
-        showNotification("Game is over. Please reset to play again.");
-        return;
-    }
-    
-    // Check if cell is already occupied
-    if (state.board[row][col] !== null) {
-        showNotification("This cell is already occupied!");
-        return;
-    }
-    
-    // Check if move would create line longer than 4
-    if (wouldCreateLineTooLong(row, col, state.currentPlayer)) {
-        showNotification(`Cannot place here - would create a line longer than ${LINE_LENGTH} ions!`);
-        return;
-    }
-    
-    // Before making the move, save current board state to history
-    saveCurrentStateToHistory();
-    
-    // Place ion
-    placeIon(row, col, state.currentPlayer);
-    
-    // Update last move
-    state.lastMove = { row, col };
-    
-    // Increment move counter
-    state.moveCount++;
-    
-    // Get position label
-    const positionLabel = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
-    
-    // Store the current player to use throughout this move
-    const currentPlayer = state.currentPlayer;
-    
-    // Check for Vectors
-    const linesInfo = checkForLines(row, col, currentPlayer);
-    
-    if (linesInfo.linesFormed > 0) {
-        // Update the protection level of the placed piece
-        state.board[row][col].protectionLevel = linesInfo.linesFormed;
-        
-        // Update score - add protection level to player's score
-        if (currentPlayer === 'white') {
-            state.whiteScore += linesInfo.linesFormed;
-        } else {
-            state.blackScore += linesInfo.linesFormed;
+    function handleCellClick(row, col) {
+        // If in review mode, ignore clicks on the board
+        if (state.reviewMode) {
+            showNotification("You are in review mode. Use the review controls to navigate the game.");
+            return;
         }
         
-        // Add to game log with N notation
-        const nodeLabel = linesInfo.linesFormed > 1 ? 
-            `${positionLabel}<span class="node-marker">N</span>${linesInfo.linesFormed}` : 
-            `${positionLabel}<span class="node-marker">N</span>`;
-                
-        addGameLogEntry(nodeLabel);
+        // Check if game is not started yet
+        if (!state.gameStarted) {
+            showNotification("Please click 'Start Game' to begin playing.");
+            return;
+        }
         
-        // Switch players BEFORE animations start
-        // This ensures the next player is set correctly
-        switchToNextPlayer();
+        // Check if game is over
+        if (state.gameOver) {
+            showNotification("Game is over. Please reset to play again.");
+            return;
+        }
         
-        // Process the vectors sequentially with animations
-        processVectorsSequentially(linesInfo.vectors, row, col, linesInfo.linesFormed, () => {
-            // After all animations complete, check for Nexus
-            const nexusResult = checkForNexus();
-            if (nexusResult) {
-                endGameWithNexus(nexusResult);
-                return;
+        // Check if cell is already occupied
+        if (state.board[row][col] !== null) {
+            showNotification("This cell is already occupied!");
+            return;
+        }
+        
+        // Check if move would create line longer than 4
+        if (wouldCreateLineTooLong(row, col, state.currentPlayer)) {
+            showNotification(`Cannot place here - would create a line longer than ${LINE_LENGTH} ions!`);
+            return;
+        }
+        
+        // Before making the move, save current board state to history
+        saveCurrentStateToHistory();
+        
+        // Place ion
+        placeIon(row, col, state.currentPlayer);
+        
+        // Update last move
+        state.lastMove = { row, col };
+        
+        // Increment move counter
+        state.moveCount++;
+        
+        // Get position label
+        const positionLabel = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
+        
+        // Store the current player to use throughout this move
+        const currentPlayer = state.currentPlayer;
+        
+        // Check for Vectors
+        const linesInfo = checkForLines(row, col, currentPlayer);
+        
+        if (linesInfo.linesFormed > 0) {
+            // Update the protection level of the placed piece
+            state.board[row][col].protectionLevel = linesInfo.linesFormed;
+            
+            // Update score - add protection level to player's score
+            if (currentPlayer === 'white') {
+                state.whiteScore += linesInfo.linesFormed;
+            } else {
+                state.blackScore += linesInfo.linesFormed;
             }
+            
+            // Add to game log with N notation
+            const nodeLabel = linesInfo.linesFormed > 1 ? 
+                `${positionLabel}<span class="node-marker">N</span>${linesInfo.linesFormed}` : 
+                `${positionLabel}<span class="node-marker">N</span>`;
+                    
+            addGameLogEntry(nodeLabel);
+            
+            // Switch players BEFORE animations start
+            // This ensures the next player is set correctly
+            switchToNextPlayer();
+            
+            // Process the vectors sequentially with animations
+            processVectorsSequentially(linesInfo.vectors, row, col, linesInfo.linesFormed, () => {
+                // After all animations complete, check for Nexus
+                const nexusResult = checkForNexus();
+                if (nexusResult) {
+                    endGameWithNexus(nexusResult);
+                    return;
+                }
+                
+                // Check if no legal moves left
+                if (!hasLegalMoves()) {
+                    endGameByNodeCount();
+                }
+            });
+        } else {
+            // Just add the position to the game log
+            addGameLogEntry(positionLabel);
+            
+            // Switch players immediately since there are no animations
+            switchToNextPlayer();
             
             // Check if no legal moves left
             if (!hasLegalMoves()) {
                 endGameByNodeCount();
             }
-        });
-    } else {
-        // Just add the position to the game log
-        addGameLogEntry(positionLabel);
-        
-        // Switch players immediately since there are no animations
-        switchToNextPlayer();
-        
-        // Check if no legal moves left
-        if (!hasLegalMoves()) {
-            endGameByNodeCount();
         }
     }
-}
 
     // Check for a Nexus (line of 4 nodes)
     function checkForNexus(providedBoard) {
@@ -1075,36 +1077,36 @@ function handleCellClick(row, col) {
         }
         
         // Highlight the winning line
-for (const pos of result.positions) {
-    const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
-    if (cell) {
-        cell.classList.add('winning-line');
-    }
-}
+        for (const pos of result.positions) {
+            const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
+            if (cell) {
+                cell.classList.add('winning-line');
+            }
+        }
 
-// Show message only if not already shown
-const winner = result.winner.charAt(0).toUpperCase() + result.winner.slice(1);
-const nexusMessage = `${winner} achieves a Nexus!`;
+        // Show message only if not already shown
+        const winner = result.winner.charAt(0).toUpperCase() + result.winner.slice(1);
+        const nexusMessage = `${winner} achieves a Nexus!`;
 
-// Check if this message already exists in the game log
-const messageExists = Array.from(document.querySelectorAll('.message-entry'))
-    .some(entry => entry.textContent === nexusMessage);
+        // Check if this message already exists in the game log
+        const messageExists = Array.from(document.querySelectorAll('.message-entry'))
+            .some(entry => entry.textContent === nexusMessage);
 
-// Only add the message if it doesn't already exist
-if (!messageExists) {
-    addSystemMessage(nexusMessage);
-}
+        // Only add the message if it doesn't already exist
+        if (!messageExists) {
+            addSystemMessage(nexusMessage);
+        }
 
-// Show banner
-if (gameOverBanner) {
-    gameOverBanner.textContent = `Game Over: ${winner} wins with a Nexus!`;
-    gameOverBanner.style.display = 'block';
-}
+        // Show banner
+        if (gameOverBanner) {
+            gameOverBanner.textContent = `Game Over: ${winner} wins with a Nexus!`;
+            gameOverBanner.style.display = 'block';
+        }
 
-// Remove active player indicators at game end
-document.querySelector('.white-score').classList.remove('active-player');
-document.querySelector('.black-score').classList.remove('active-player');
-        
+        // Remove active player indicators at game end
+        document.querySelector('.white-score').classList.remove('active-player');
+        document.querySelector('.black-score').classList.remove('active-player');
+                
         // Show review controls
         enableReviewMode();
         
@@ -1324,39 +1326,39 @@ document.querySelector('.black-score').classList.remove('active-player');
     function resetGame() {
         // Reset state
         state.currentPlayer = 'white';
-    state.board = Array(8).fill().map(() => Array(8).fill(null));
-    state.whiteScore = 0;
-    state.blackScore = 0;
-    state.gameOver = false;
-    state.lastMove = null;
-    state.moveCount = 0;
-    state.gameStarted = false;
-    state.reviewMode = false;
-    state.moveHistory = [];
-    state.currentReviewMove = 0;
-    state.nexusPositions = null;  // Reset the Nexus positions
-    state.finalBoardState = null;  // Reset the final board state
-    
-    // Also remove the 'winning-line' class from any cells
-    document.querySelectorAll('.winning-line').forEach(cell => {
-        cell.classList.remove('winning-line');
-    });
-    
-    // Re-add event listeners to all cells (they were removed when the nexus was detected)
-    document.querySelectorAll('.cell').forEach((cell, index) => {
-        const row = Math.floor(index / 8);
-        const col = index % 8;
-        // Remove existing cell to clear any listeners
-        const newCell = cell.cloneNode(true);
-        // Add back the click handler
-        newCell.addEventListener('click', () => handleCellClick(row, col));
-        cell.parentNode.replaceChild(newCell, cell);
-    });
-
-          // Hide timers
-    if (whiteTimerElement) whiteTimerElement.style.display = 'none';
-    if (blackTimerElement) blackTimerElement.style.display = 'none';
+        state.board = Array(8).fill().map(() => Array(8).fill(null));
+        state.whiteScore = 0;
+        state.blackScore = 0;
+        state.gameOver = false;
+        state.lastMove = null;
+        state.moveCount = 0;
+        state.gameStarted = false;
+        state.reviewMode = false;
+        state.moveHistory = [];
+        state.currentReviewMove = 0;
+        state.nexusPositions = null;  // Reset the Nexus positions
+        state.finalBoardState = null;  // Reset the final board state
         
+        // Also remove the 'winning-line' class from any cells
+        document.querySelectorAll('.winning-line').forEach(cell => {
+            cell.classList.remove('winning-line');
+        });
+        
+        // Re-add event listeners to all cells (they were removed when the nexus was detected)
+        document.querySelectorAll('.cell').forEach((cell, index) => {
+            const row = Math.floor(index / 8);
+            const col = index % 8;
+            // Remove existing cell to clear any listeners
+            const newCell = cell.cloneNode(true);
+            // Add back the click handler
+            newCell.addEventListener('click', () => handleCellClick(row, col));
+            cell.parentNode.replaceChild(newCell, cell);
+        });
+
+        // Hide timers
+        if (whiteTimerElement) whiteTimerElement.style.display = 'none';
+        if (blackTimerElement) blackTimerElement.style.display = 'none';
+            
         // Reset timer state
         if (baseTimeSelect) {
             timerState.whiteTime = parseInt(baseTimeSelect.value) * 60;
@@ -1413,16 +1415,10 @@ document.querySelector('.black-score').classList.remove('active-player');
         if (gameModeSelect) {
             // Initial update based on selected mode
             updateCoreVisibility(gameModeSelect.value);
-            updateAIDifficultyVisibility(gameModeSelect.value); // Add this line
-            
-            // Add event listener for changes
-            gameModeSelect.addEventListener('change', function() {
-                const mode = this.value;
-                updateCoreVisibility(mode);
-                updateAIDifficultyVisibility(mode); // Add this line
-            });
+            updateAIDifficultyVisibility(gameModeSelect.value);
+            updateGameModeClass(gameModeSelect.value);
         }
-    } // <-- ADD THIS CLOSING BRACE HERE
+    }
     
     // Review mode functions
     function enableReviewMode() {
@@ -1593,29 +1589,29 @@ document.querySelector('.black-score').classList.remove('active-player');
     }
     
     // Start game button
-if (startGameButton) {
-    startGameButton.addEventListener('click', function() {
-        state.gameStarted = true;
-        
-        // Hide setup and show timers if needed
-        if (timerSetupElement) timerSetupElement.style.display = 'none';
-        
-        // Setup timers
-        setupTimers();
-        
-        // Save initial empty board state to history
-        saveCurrentStateToHistory();
-        
-        // Initialize CORE's status
-        updateCoreStatus('Waiting');
-        
-        // Add this code to ensure white is set as active at game start
-        if (state.gameStarted && !state.gameOver) {
-            document.querySelector('.white-score').classList.add('active-player');
-            document.querySelector('.black-score').classList.remove('active-player');
-        }
-    });
-}
+    if (startGameButton) {
+        startGameButton.addEventListener('click', function() {
+            state.gameStarted = true;
+            
+            // Hide setup and show timers if needed
+            if (timerSetupElement) timerSetupElement.style.display = 'none';
+            
+            // Setup timers
+            setupTimers();
+            
+            // Save initial empty board state to history
+            saveCurrentStateToHistory();
+            
+            // Initialize CORE's status
+            updateCoreStatus('Waiting');
+            
+            // Add this code to ensure white is set as active at game start
+            if (state.gameStarted && !state.gameOver) {
+                document.querySelector('.white-score').classList.add('active-player');
+                document.querySelector('.black-score').classList.remove('active-player');
+            }
+        });
+    }
     
     // Event listeners
     if (resetButton) {
@@ -1778,39 +1774,60 @@ if (startGameButton) {
         }
     }
     
+    // Function to sync the CORE avatars
+    function syncCoreAvatars() {
+        const mainCore = document.getElementById('core-avatar');
+        const headerCore = document.getElementById('core-avatar-header');
+        
+        if (!mainCore || !headerCore) return;
+        
+        // Function to sync status changes
+        const syncStatus = () => {
+            // Copy classes
+            if (mainCore.classList.contains('thinking')) {
+                headerCore.classList.add('thinking');
+            } else {
+                headerCore.classList.remove('thinking');
+            }
+            
+            if (mainCore.classList.contains('success')) {
+                headerCore.classList.add('success');
+            } else {
+                headerCore.classList.remove('success');
+            }
+            
+            if (mainCore.classList.contains('node-created')) {
+                headerCore.classList.add('node-created');
+            } else {
+                headerCore.classList.remove('node-created');
+            }
+            
+            // Copy status text
+            const mainStatus = mainCore.querySelector('.avatar-status');
+            const headerStatus = headerCore.querySelector('.avatar-status');
+            
+            if (mainStatus && headerStatus) {
+                headerStatus.textContent = mainStatus.textContent;
+            }
+        };
+        
+        // Create a MutationObserver to watch for changes
+        const observer = new MutationObserver(syncStatus);
+        
+        // Start observing the main CORE avatar
+        observer.observe(mainCore, {
+            attributes: true,
+            childList: true,
+            subtree: true
+        });
+        
+        // Initial sync
+        syncStatus();
+    }
+    
     // Call gameLoop() periodically to check for AI moves
     setInterval(gameLoop, 100); // Check for AI moves every 100ms
-
-    // Call gameLoop() periodically to check for AI moves
-setInterval(gameLoop, 100); // Check for AI moves every 100ms
-
-// Add this function to sync the header CORE avatar status with the main one
-function syncCoreAvatars() {
-    const mainCore = document.getElementById('core-avatar');
-    const headerCore = document.getElementById('core-avatar-header');
     
-    if (!mainCore || !headerCore) return;
-    
-    // Function to sync status changes
-    const syncStatus = () => {
-        // ... rest of the function ...
-    };
-    
-    // Create a MutationObserver to watch for changes
-    const observer = new MutationObserver(syncStatus);
-    
-    // Start observing the main CORE avatar
-    observer.observe(mainCore, {
-        attributes: true,
-        childList: true,
-        subtree: true
-    });
-    
-    // Initial sync
-    syncStatus();
-}
-
-// Add sync for CORE avatars
-syncCoreAvatars();
-
-}); // <-- ADD THIS to close the document ready handler
+    // Call syncCoreAvatars to keep the avatars in sync
+    syncCoreAvatars();
+}); // End of DOMContentLoaded event handler
