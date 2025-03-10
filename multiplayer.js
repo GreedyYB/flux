@@ -9,8 +9,19 @@ let isProcessingMove = false;
 
 // Initialize multiplayer connection
 function initializeMultiplayer() {
-    // Connect to the server
-    socket = io();
+    // Connect to the server with explicit URL
+    const serverUrl = window.location.origin;
+    console.log("Connecting to server at:", serverUrl);
+    socket = io(serverUrl);
+    
+    // Add connection status logging
+    socket.on('connect', () => {
+        console.log('Socket connected successfully, ID:', socket.id);
+    });
+    
+    socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+    });
     
     // Setup all socket event listeners
     setupSocketListeners();
@@ -21,20 +32,32 @@ function initializeMultiplayer() {
 // Set up Socket.io event listeners
 function setupSocketListeners() {
     // Room created event
-    socket.on('roomCreated', (data) => {
-        roomCode = data.roomCode;
-        playerColor = data.playerColor;
-        isMultiplayerMode = true;
-        
-        // Initialize game with server state
+socket.on('roomCreated', (data) => {
+    console.log("Room created data received:", data);
+    
+    if (!data || data.roomCode === undefined) {
+        console.error("Invalid room data received:", data);
+        if (typeof window.showNotification === 'function') {
+            window.showNotification("Error creating room. Please try again.");
+        }
+        return;
+    }
+    
+    roomCode = data.roomCode;
+    playerColor = data.playerColor;
+    isMultiplayerMode = true;
+    
+    // Initialize game with server state
+    if (data.gameState) {
         initializeGameWithServerState(data.gameState);
-        
-        // Update UI to show room code and waiting for opponent
-        showRoomCode(roomCode);
-        showWaitingMessage();
-        
-        console.log(`Room created: ${roomCode}, You are: ${playerColor}`);
-    });
+    }
+    
+    // Update UI to show room code and waiting for opponent
+    showRoomCode(roomCode);
+    showWaitingMessage();
+    
+    console.log(`Room created: ${roomCode}, You are: ${playerColor}`);
+});
     
     // Room joined event
     socket.on('roomJoined', (data) => {
@@ -342,6 +365,8 @@ function capitalize(str) {
 
 // UI Helper functions
 function showRoomCode(code) {
+    console.log("Showing room code:", code);
+    
     // Create or update room code display
     let codeDisplay = document.getElementById('room-code-display');
     
@@ -352,7 +377,7 @@ function showRoomCode(code) {
         document.querySelector('.header-area').appendChild(codeDisplay);
     }
     
-    codeDisplay.innerHTML = `<span>Room Code:</span> <strong>${code}</strong>`;
+    codeDisplay.innerHTML = `<span>Room Code:</span> <strong>${code || 'None'}</strong>`;
     codeDisplay.style.display = 'block';
 }
 
