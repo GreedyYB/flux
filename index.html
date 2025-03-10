@@ -102,13 +102,14 @@
             </div>
 
             <!-- Game mode selector -->
-            <div class="game-mode">
-                <label for="game-mode">Game Mode:</label>
-                <select id="game-mode">
-                    <option value="human">Play Against Human</option>
-                    <option value="ai">Play Against AI</option>
-                </select>
-            </div>
+<div class="game-mode">
+    <label for="game-mode">Game Mode:</label>
+    <select id="game-mode">
+        <option value="human">Play Against Human</option>
+        <option value="ai">Play Against AI</option>
+        <option value="multiplayer">Multiplayer Online</option>
+    </select>
+</div>
 
             <!-- Player Color Selection - add this after the Game Mode selector -->
 <div class="player-color">
@@ -176,6 +177,8 @@
         <p>11. <strong>Play Against AI:</strong> If you have no human companions, why not try a game against our AI expert, CORE (Cognitive Operational Reasoning Engine). Choose from levels 1-4, easy to expert.</p>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="multiplayer.js"></script>
     <script src="flux.js"></script>
     <script src="ai.js"></script>
 </body>

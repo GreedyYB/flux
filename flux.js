@@ -125,20 +125,45 @@ if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
 }
 
     // Set up game mode change handler
-    if (gameModeSelect && coreAvatar) {
-        // Initial update based on selected mode
-        updateCoreVisibility(gameModeSelect.value);
-        updateAIDifficultyVisibility(gameModeSelect.value);
-        updateGameModeClass(gameModeSelect.value); // Add this line
+if (gameModeSelect && coreAvatar) {
+    // Initial update based on selected mode
+    updateCoreVisibility(gameModeSelect.value);
+    updateAIDifficultyVisibility(gameModeSelect.value);
+    updateGameModeClass(gameModeSelect.value);
+    
+    // Add event listener for changes
+    gameModeSelect.addEventListener('change', function() {
+        const mode = this.value;
+        updateCoreVisibility(mode);
+        updateAIDifficultyVisibility(mode);
+        updateGameModeClass(mode);
         
-        // Add event listener for changes
-        gameModeSelect.addEventListener('change', function() {
-            const mode = this.value;
-            updateCoreVisibility(mode);
-            updateAIDifficultyVisibility(mode);
-            updateGameModeClass(mode); // Add this line
-        });
-    }
+        // Handle multiplayer mode selection
+        if (mode === 'multiplayer') {
+            // Initialize multiplayer connection if not already done
+            if (window.multiplayer && typeof window.multiplayer.initialize === 'function') {
+                window.multiplayer.initialize();
+            }
+            
+            // Show multiplayer home screen
+            if (window.multiplayer && typeof window.multiplayer.showHomeScreen === 'function') {
+                window.multiplayer.showHomeScreen();
+            }
+            
+            // Hide player color selection - this is determined by the room
+            document.querySelector('.player-color').style.display = 'none';
+        } else {
+            // Show player color selection for non-multiplayer modes
+            document.querySelector('.player-color').style.display = 'flex';
+            
+            // Hide multiplayer home screen if it exists
+            const homeScreen = document.getElementById('home-screen');
+            if (homeScreen) {
+                homeScreen.style.display = 'none';
+            }
+        }
+    });
+}
 
     // Function to control CORE's visibility
     function updateCoreVisibility(gameMode) {
@@ -323,10 +348,19 @@ if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
     }
 
     // Update scores display
-    function updateScores() {
-        if (whiteScoreElement) whiteScoreElement.textContent = state.whiteScore;
-        if (blackScoreElement) blackScoreElement.textContent = state.blackScore;
+function updateScores() {
+    if (whiteScoreElement) whiteScoreElement.textContent = state.whiteScore;
+    if (blackScoreElement) blackScoreElement.textContent = state.blackScore;
+    
+    // Emit score update for multiplayer if active
+    if (window.multiplayer && typeof window.multiplayer.emitGameEvent === 'function' && 
+        window.multiplayer.isMultiplayerActive()) {
+        window.multiplayer.emitGameEvent('updateScore', {
+            whiteScore: state.whiteScore,
+            blackScore: state.blackScore
+        });
     }
+}
 
     // Timer functions
     function formatTime(seconds) {
@@ -738,32 +772,38 @@ if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
     }
 
     // Switch to the next player
-    function switchToNextPlayer() {
-        // Switch players
-        state.currentPlayer = state.currentPlayer === 'white' ? 'black' : 'white';
-        // No need to update currentPlayerElement since it doesn't exist
-        
-        // Switch timer if enabled
-        if (timerState.enabled) {
-            switchTimer();
-        }
-        
-        // Update the board (including scores)
-        updateBoard();
-        
-        // If it's now the player's turn, update CORE to waiting
-        if (state.currentPlayer === 'white') {
-            updateCoreGameState('player-turn');
-        }
-
-        // Remove active player class from both scores
-        document.querySelector('.white-score').classList.remove('active-player');
-        document.querySelector('.black-score').classList.remove('active-player');
-
-        // Add active player class to current player's score
-        const activeScoreClass = state.currentPlayer === 'white' ? '.white-score' : '.black-score';
-        document.querySelector(activeScoreClass).classList.add('active-player');
+function switchToNextPlayer() {
+    // Switch players
+    state.currentPlayer = state.currentPlayer === 'white' ? 'black' : 'white';
+    // No need to update currentPlayerElement since it doesn't exist
+    
+    // Switch timer if enabled
+    if (timerState.enabled) {
+        switchTimer();
     }
+    
+    // Update the board (including scores)
+    updateBoard();
+    
+    // If it's now the player's turn, update CORE to waiting
+    if (state.currentPlayer === 'white') {
+        updateCoreGameState('player-turn');
+    }
+
+    // Remove active player class from both scores
+    document.querySelector('.white-score').classList.remove('active-player');
+    document.querySelector('.black-score').classList.remove('active-player');
+
+    // Add active player class to current player's score
+    const activeScoreClass = state.currentPlayer === 'white' ? '.white-score' : '.black-score';
+    document.querySelector(activeScoreClass).classList.add('active-player');
+    
+    // Emit event for multiplayer if active
+    if (window.multiplayer && typeof window.multiplayer.emitGameEvent === 'function' && 
+        window.multiplayer.isMultiplayerActive()) {
+        window.multiplayer.emitGameEvent('switchPlayer', {});
+    }
+}
 
     // Check if a move would create a line longer than 4
     function wouldCreateLineTooLong(row, col, color) {
@@ -906,112 +946,127 @@ if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
     }
 
     // Handle cell click
-    function handleCellClick(row, col) {
-        try {
-            // If in review mode, ignore clicks on the board
-            if (state.reviewMode) {
-                showNotification("You are in review mode. Use the review controls to navigate the game.");
-                return;
-            }
-            
-            // Check if game is not started yet
-            if (!state.gameStarted) {
-                showNotification("Please click 'Start Game' to begin playing.");
-                return;
-            }
-            
-            // Check if game is over
-            if (state.gameOver) {
-                showNotification("Game is over. Please reset to play again.");
-                return;
-            }
-            
-            // Check if cell is already occupied
-            if (state.board[row][col] !== null) {
-                showNotification("This cell is already occupied!");
-                return;
-            }
-            
-            // Check if move would create line longer than 4
-            if (wouldCreateLineTooLong(row, col, state.currentPlayer)) {
-                showNotification(`Cannot place here - would create a line longer than ${LINE_LENGTH} ions!`);
-                return;
-            }
-            
-            // Before making the move, save current board state to history
-            saveCurrentStateToHistory();
-            
-            // Place ion
-            placeIon(row, col, state.currentPlayer);
-            
-            // Update last move
-            state.lastMove = { row, col };
-            
-            // Increment move counter
-            state.moveCount++;
-            
-            // Get position label
-            const positionLabel = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
-            
-            // Store the current player to use throughout this move
-            const currentPlayer = state.currentPlayer;
-            
-            // Check for Vectors
-            const linesInfo = checkForLines(row, col, currentPlayer);
-            
-            if (linesInfo.linesFormed > 0) {
-                // Update the protection level of the placed piece
-                state.board[row][col].protectionLevel = linesInfo.linesFormed;
-                
-                // Update score - add protection level to player's score
-                if (currentPlayer === 'white') {
-                    state.whiteScore += linesInfo.linesFormed;
-                } else {
-                    state.blackScore += linesInfo.linesFormed;
+function handleCellClick(row, col) {
+    try {
+        // Check if this is an online multiplayer game
+        const isMultiplayerActive = window.multiplayer && typeof window.multiplayer.isMultiplayerActive === 'function' && 
+            window.multiplayer.isMultiplayerActive();
+        
+        if (isMultiplayerActive) {
+            // In multiplayer, send the move to the server and let it handle the rest
+            if (window.multiplayer && typeof window.multiplayer.makeMove === 'function') {
+                const moveMade = window.multiplayer.makeMove(row, col);
+                if (!moveMade) {
+                    // If the move wasn't made (not your turn, etc.), return early
+                    return;
                 }
-                
-                // Add to game log with N notation
-                const nodeLabel = linesInfo.linesFormed > 1 ? 
-                    `${positionLabel}<span class="node-marker">N</span>${linesInfo.linesFormed}` : 
-                    `${positionLabel}<span class="node-marker">N</span>`;
-                        
-                addGameLogEntry(nodeLabel);
-                
-                // Switch players BEFORE animations start
-                // This ensures the next player is set correctly
-                switchToNextPlayer();
-                
-                // Process the vectors sequentially with animations
-                processVectorsSequentially(linesInfo.vectors, row, col, linesInfo.linesFormed, () => {
-                    // After all animations complete, check for Nexus
-                    const nexusResult = checkForNexus();
-                    if (nexusResult) {
-                        endGameWithNexus(nexusResult);
-                        return;
-                    }
-                    
-                    // Check if no legal moves left
-                    if (!hasLegalMoves()) {
-                        endGameByNodeCount();
-                    }
-                });
+            }
+        }
+        
+        // If in review mode, ignore clicks on the board
+        if (state.reviewMode) {
+            showNotification("You are in review mode. Use the review controls to navigate the game.");
+            return;
+        }
+        
+        // Check if game is not started yet
+        if (!state.gameStarted) {
+            showNotification("Please click 'Start Game' to begin playing.");
+            return;
+        }
+        
+        // Check if game is over
+        if (state.gameOver) {
+            showNotification("Game is over. Please reset to play again.");
+            return;
+        }
+        
+        // Check if cell is already occupied
+        if (state.board[row][col] !== null) {
+            showNotification("This cell is already occupied!");
+            return;
+        }
+        
+        // Check if move would create line longer than 4
+        if (wouldCreateLineTooLong(row, col, state.currentPlayer)) {
+            showNotification(`Cannot place here - would create a line longer than ${LINE_LENGTH} ions!`);
+            return;
+        }
+        
+        // Before making the move, save current board state to history
+        saveCurrentStateToHistory();
+        
+        // Place ion
+        placeIon(row, col, state.currentPlayer);
+        
+        // Update last move
+        state.lastMove = { row, col };
+        
+        // Increment move counter
+        state.moveCount++;
+        
+        // Get position label
+        const positionLabel = String.fromCharCode(65 + col) + (BOARD_SIZE - row);
+        
+        // Store the current player to use throughout this move
+        const currentPlayer = state.currentPlayer;
+        
+        // Check for Vectors
+        const linesInfo = checkForLines(row, col, currentPlayer);
+        
+        if (linesInfo.linesFormed > 0) {
+            // Update the protection level of the placed piece
+            state.board[row][col].protectionLevel = linesInfo.linesFormed;
+            
+            // Update score - add protection level to player's score
+            if (currentPlayer === 'white') {
+                state.whiteScore += linesInfo.linesFormed;
             } else {
-                // Just add the position to the game log
-                addGameLogEntry(positionLabel);
-                
-                // Switch players immediately since there are no animations
-                switchToNextPlayer();
+                state.blackScore += linesInfo.linesFormed;
+            }
+            
+            // Add to game log with N notation
+            const nodeLabel = linesInfo.linesFormed > 1 ? 
+                `${positionLabel}<span class="node-marker">N</span>${linesInfo.linesFormed}` : 
+                `${positionLabel}<span class="node-marker">N</span>`;
+                    
+            addGameLogEntry(nodeLabel);
+            
+            // Switch players BEFORE animations start
+            // This ensures the next player is set correctly
+            switchToNextPlayer();
+            
+            // Process the vectors sequentially with animations
+            processVectorsSequentially(linesInfo.vectors, row, col, linesInfo.linesFormed, () => {
+                // After all animations complete, check for Nexus
+                const nexusResult = checkForNexus();
+                if (nexusResult) {
+                    endGameWithNexus(nexusResult);
+                    return;
+                }
                 
                 // Check if no legal moves left
                 if (!hasLegalMoves()) {
                     endGameByNodeCount();
                 }
+            });
+        } else {
+            // Just add the position to the game log
+            addGameLogEntry(positionLabel);
+            
+            // Switch players immediately since there are no animations
+            switchToNextPlayer();
+            
+            // Check if no legal moves left
+            if (!hasLegalMoves()) {
+                endGameByNodeCount();
             }
-        } catch (error) {
-            console.error("Error handling cell click:", error);
-            showNotification("An error occurred. Please try again.");
         }
+    } catch (error) {
+        console.error("Error handling cell click:", error);
+        showNotification("An error occurred. Please try again.");
     }
+}
 
     // Check for a Nexus (line of 4 nodes)
     function checkForNexus(providedBoard) {
@@ -1072,30 +1127,39 @@ if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
     }
 
     // End game with a Nexus
-    function endGameWithNexus(result) {
-        state.gameOver = true;
-        state.nexusPositions = result.positions;
-        state.finalBoardState = JSON.parse(JSON.stringify(state.board));
-        
-        // Important: Immediately disable all board click events to prevent further moves
-        document.querySelectorAll('.cell').forEach(cell => {
-            // Clone and replace to remove all event listeners
-            const newCell = cell.cloneNode(true);
-            cell.parentNode.replaceChild(newCell, cell);
+function endGameWithNexus(result) {
+    state.gameOver = true;
+    state.nexusPositions = result.positions;
+    state.finalBoardState = JSON.parse(JSON.stringify(state.board));
+    
+    // Emit game over for multiplayer if active
+    if (window.multiplayer && typeof window.multiplayer.emitGameEvent === 'function' && 
+        window.multiplayer.isMultiplayerActive()) {
+        window.multiplayer.emitGameEvent('gameOver', {
+            winner: result.winner,
+            type: 'nexus'
         });
-        
-        // Stop timer if enabled
-        if (timerState.enabled && timerState.running) {
-            pauseTimer();
+    }
+    
+    // Important: Immediately disable all board click events to prevent further moves
+    document.querySelectorAll('.cell').forEach(cell => {
+        // Clone and replace to remove all event listeners
+        const newCell = cell.cloneNode(true);
+        cell.parentNode.replaceChild(newCell, cell);
+    });
+    
+    // Stop timer if enabled
+    if (timerState.enabled && timerState.running) {
+        pauseTimer();
+    }
+    
+    // Highlight the winning line
+    for (const pos of result.positions) {
+        const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
+        if (cell) {
+            cell.classList.add('winning-line');
         }
-        
-        // Highlight the winning line
-        for (const pos of result.positions) {
-            const cell = document.querySelector(`.cell[data-row="${pos.row}"][data-col="${pos.col}"]`);
-            if (cell) {
-                cell.classList.add('winning-line');
-            }
-        }
+    }
 
         // Show message only if not already shown
         const winner = result.winner.charAt(0).toUpperCase() + result.winner.slice(1);
@@ -1132,57 +1196,72 @@ if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
     }
 
     // End game by node count
-    function endGameByNodeCount() {
-        state.gameOver = true;
-        
-        // Stop timer if enabled
-        if (timerState.enabled && timerState.running) {
-            pauseTimer();
-        }
-        
-        // Count nodes
-        let whiteNodes = 0;
-        let blackNodes = 0;
-        
-        for (let row = 0; row < BOARD_SIZE; row++) {
-            for (let col = 0; col < BOARD_SIZE; col++) {
-                const piece = state.board[row][col];
-                if (piece && piece.protectionLevel > 0) {
-                    if (piece.color === 'white') {
-                        whiteNodes++;
-                    } else {
-                        blackNodes++;
-                    }
+function endGameByNodeCount() {
+    state.gameOver = true;
+    
+    // Stop timer if enabled
+    if (timerState.enabled && timerState.running) {
+        pauseTimer();
+    }
+    
+    // Count nodes
+    let whiteNodes = 0;
+    let blackNodes = 0;
+    
+    for (let row = 0; row < BOARD_SIZE; row++) {
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            const piece = state.board[row][col];
+            if (piece && piece.protectionLevel > 0) {
+                if (piece.color === 'white') {
+                    whiteNodes++;
+                } else {
+                    blackNodes++;
                 }
             }
         }
-        
-        // Determine winner
-        let message;
-        
-        if (whiteNodes > blackNodes) {
-            message = `Game Over! White wins with ${whiteNodes} Nodes vs ${blackNodes}`;
-            updateCoreGameState('game-over-loss');
-        } else if (blackNodes > whiteNodes) {
-            message = `Game Over! Black wins with ${blackNodes} Nodes vs ${whiteNodes}`;
-            updateCoreGameState('game-over-win');
-        } else {
-            message = `Game Over! It's a draw! Both players have ${whiteNodes} Nodes`;
-            updateCoreGameState('game-over-draw');
-        }
-        
-        // Show message
-        addSystemMessage(message);
-        
-        // Show banner
-        if (gameOverBanner) {
-            gameOverBanner.textContent = message;
-            gameOverBanner.style.display = 'block';
-        }
-        
-        // Show review controls
-        enableReviewMode();
     }
+    
+    // Determine winner
+    let message;
+    let winner = null;
+    
+    if (whiteNodes > blackNodes) {
+        winner = 'white';
+        message = `Game Over! White wins with ${whiteNodes} Nodes vs ${blackNodes}`;
+        updateCoreGameState('game-over-loss');
+    } else if (blackNodes > whiteNodes) {
+        winner = 'black';
+        message = `Game Over! Black wins with ${blackNodes} Nodes vs ${whiteNodes}`;
+        updateCoreGameState('game-over-win');
+    } else {
+        winner = 'draw';
+        message = `Game Over! It's a draw! Both players have ${whiteNodes} Nodes`;
+        updateCoreGameState('game-over-draw');
+    }
+    
+    // Emit game over for multiplayer if active
+    if (window.multiplayer && typeof window.multiplayer.emitGameEvent === 'function' && 
+        window.multiplayer.isMultiplayerActive()) {
+        window.multiplayer.emitGameEvent('gameOver', {
+            winner: winner,
+            type: 'nodeCount',
+            whiteScore: whiteNodes,
+            blackScore: blackNodes
+        });
+    }
+    
+    // Show message
+    addSystemMessage(message);
+    
+    // Show banner
+    if (gameOverBanner) {
+        gameOverBanner.textContent = message;
+        gameOverBanner.style.display = 'block';
+    }
+    
+    // Show review controls
+    enableReviewMode();
+}
 
     // Check if there are any legal moves left
     function hasLegalMoves() {
@@ -1218,59 +1297,65 @@ if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
     }
 
     // Add a move to the game log
-    function addGameLogEntry(position) {
-        if (!messagesContentElement) return;
+function addGameLogEntry(position) {
+    if (!messagesContentElement) return;
+    
+    const moveNumber = Math.ceil(state.moveCount / 2);
+    const isWhiteTurn = (state.moveCount % 2 === 1);
+    
+    // Find or create row for this move number
+    let moveRow = document.querySelector(`.message-entry[data-move="${moveNumber}"]`);
+    
+    if (!moveRow) {
+        moveRow = document.createElement('div');
+        moveRow.className = 'message-entry';
+        moveRow.dataset.move = moveNumber;
+        moveRow.dataset.moveCount = state.moveCount;
         
-        const moveNumber = Math.ceil(state.moveCount / 2);
-        const isWhiteTurn = (state.moveCount % 2 === 1);
+        // Add move number
+        const numberSpan = document.createElement('span');
+        numberSpan.className = 'message-number';
+        numberSpan.textContent = moveNumber + '.';
+        moveRow.appendChild(numberSpan);
         
-        // Find or create row for this move number
-        let moveRow = document.querySelector(`.message-entry[data-move="${moveNumber}"]`);
+        // Add placeholder for white and black moves
+        const whiteSpan = document.createElement('span');
+        whiteSpan.className = 'message-position white-move';
+        moveRow.appendChild(whiteSpan);
         
-        if (!moveRow) {
-            moveRow = document.createElement('div');
-            moveRow.className = 'message-entry';
-            moveRow.dataset.move = moveNumber;
-            moveRow.dataset.moveCount = state.moveCount;
-            
-            // Add move number
-            const numberSpan = document.createElement('span');
-            numberSpan.className = 'message-number';
-            numberSpan.textContent = moveNumber + '.';
-            moveRow.appendChild(numberSpan);
-            
-            // Add placeholder for white and black moves
-            const whiteSpan = document.createElement('span');
-            whiteSpan.className = 'message-position white-move';
-            moveRow.appendChild(whiteSpan);
-            
-            const blackSpan = document.createElement('span');
-            blackSpan.className = 'message-position black-move';
-            moveRow.appendChild(blackSpan);
-            
-            messagesContentElement.appendChild(moveRow);
-            
-            // Add click event for review mode
-            moveRow.addEventListener('click', function() {
-                if (state.reviewMode && state.gameOver) {
-                    const moveCount = parseInt(this.dataset.moveCount);
-                    goToMove(moveCount);
-                }
-            });
-        }
+        const blackSpan = document.createElement('span');
+        blackSpan.className = 'message-position black-move';
+        moveRow.appendChild(blackSpan);
         
-        // Update white or black move
-        if (isWhiteTurn) {
-            moveRow.querySelector('.white-move').innerHTML = position;
-        } else {
-            moveRow.querySelector('.black-move').innerHTML = position;
-        }
+        messagesContentElement.appendChild(moveRow);
         
-        // Scroll to bottom
-        if (messagesContentElement.parentElement) {
-            messagesContentElement.parentElement.scrollTop = messagesContentElement.parentElement.scrollHeight;
-        }
+        // Add click event for review mode
+        moveRow.addEventListener('click', function() {
+            if (state.reviewMode && state.gameOver) {
+                const moveCount = parseInt(this.dataset.moveCount);
+                goToMove(moveCount);
+            }
+        });
     }
+    
+    // Update white or black move
+    if (isWhiteTurn) {
+        moveRow.querySelector('.white-move').innerHTML = position;
+    } else {
+        moveRow.querySelector('.black-move').innerHTML = position;
+    }
+    
+    // Scroll to bottom
+    if (messagesContentElement.parentElement) {
+        messagesContentElement.parentElement.scrollTop = messagesContentElement.parentElement.scrollHeight;
+    }
+    
+    // Emit board update for multiplayer if active
+    if (window.multiplayer && typeof window.multiplayer.emitGameEvent === 'function' && 
+        window.multiplayer.isMultiplayerActive()) {
+        window.multiplayer.emitGameEvent('updateBoard', { board: state.board });
+    }
+}
     
     // Add a system message to the game log
     function addSystemMessage(message) {
@@ -1336,104 +1421,112 @@ if (!boardElement || !rowLabelsElement || !columnLabelsElement) {
     }
     
     // Reset the game
-    function resetGame() {
-        // Reset state
-        state.currentPlayer = 'white';
-        state.board = Array(8).fill().map(() => Array(8).fill(null));
-        state.whiteScore = 0;
-        state.blackScore = 0;
-        state.gameOver = false;
-        state.lastMove = null;
-        state.moveCount = 0;
-        state.gameStarted = false;
-        state.reviewMode = false;
-        state.moveHistory = [];
-        state.currentReviewMove = 0;
-        state.nexusPositions = null;
-        state.finalBoardState = null;
-        state.pendingAIMove = false;
-        
-        // Also remove the 'winning-line' class from any cells
-        document.querySelectorAll('.winning-line').forEach(cell => {
-            cell.classList.remove('winning-line');
-        });
-        
-        // Re-add event listeners to all cells (they were removed when the nexus was detected)
-        document.querySelectorAll('.cell').forEach((cell, index) => {
-            const row = Math.floor(index / 8);
-            const col = index % 8;
-            // Remove existing cell to clear any listeners
-            const newCell = cell.cloneNode(true);
-            // Add back the click handler
-            newCell.addEventListener('click', () => handleCellClick(row, col));
-            cell.parentNode.replaceChild(newCell, cell);
-        });
-
-        // Hide timers
-        document.body.classList.remove('timer-active');
-            
-        // Reset timer state
-        if (baseTimeSelect) {
-            timerState.whiteTime = parseInt(baseTimeSelect.value) * 60;
-            timerState.blackTime = parseInt(baseTimeSelect.value) * 60;
+function resetGame() {
+    // Check if this is a multiplayer game
+    const isMultiplayerActive = window.multiplayer && typeof window.multiplayer.isMultiplayerActive === 'function' && 
+        window.multiplayer.isMultiplayerActive();
+    
+    if (isMultiplayerActive) {
+        // For multiplayer, show the home screen instead of just resetting
+        if (window.multiplayer && typeof window.multiplayer.showHomeScreen === 'function') {
+            window.multiplayer.showHomeScreen();
         }
-        timerState.activeTimer = 'white';
-        timerState.running = false;
-        
-        if (timerState.intervalId) {
-            clearInterval(timerState.intervalId);
-            timerState.intervalId = null;
-        }
-        
-        // Update UI
-// Removed: no longer using currentPlayerElement
-// if (currentPlayerElement) currentPlayerElement.textContent = 'White';
-if (whiteScoreElement) whiteScoreElement.textContent = '0';
-if (blackScoreElement) blackScoreElement.textContent = '0';
-        
-        // Clear game log
-        if (messagesContentElement) messagesContentElement.innerHTML = '';
-        
-        // Hide game over banner
-        if (gameOverBanner) gameOverBanner.style.display = 'none';
-        
-        // Hide review controls
-        if (reviewControlsElement) reviewControlsElement.style.display = 'none';
-        
-        // Show timer setup again
-if (timerSetupElement) timerSetupElement.style.display = 'flex';
-// Remove this line: if (timerDisplayElement) timerDisplayElement.style.display = 'none';
-        
-        // Reset board
-        updateBoard();
-        
-        // Remove highlights
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.classList.remove('winning-line', 'last-move');
-        });
-        
-        // Remove selected move highlighting
-        document.querySelectorAll('.message-entry.selected-move').forEach(entry => {
-            entry.classList.remove('selected-move');
-        });
-        
-        // Update timer display
-        updateTimerDisplay();
-        
-        // Reset CORE's status
-        if (coreAvatar) {
-            updateCoreStatus('Standby');
-        }
-        
-        // Update CORE visibility based on game mode
-        if (gameModeSelect) {
-            // Initial update based on selected mode
-            updateCoreVisibility(gameModeSelect.value);
-            updateAIDifficultyVisibility(gameModeSelect.value);
-            updateGameModeClass(gameModeSelect.value);
-        }
-        document.body.classList.remove('game-started');
     }
+    
+    // Reset state
+    state.currentPlayer = 'white';
+    state.board = Array(8).fill().map(() => Array(8).fill(null));
+    state.whiteScore = 0;
+    state.blackScore = 0;
+    state.gameOver = false;
+    state.lastMove = null;
+    state.moveCount = 0;
+    state.gameStarted = false;
+    state.reviewMode = false;
+    state.moveHistory = [];
+    state.currentReviewMove = 0;
+    state.nexusPositions = null;
+    state.finalBoardState = null;
+    state.pendingAIMove = false;
+    
+    // Also remove the 'winning-line' class from any cells
+    document.querySelectorAll('.winning-line').forEach(cell => {
+        cell.classList.remove('winning-line');
+    });
+    
+    // Re-add event listeners to all cells (they were removed when the nexus was detected)
+    document.querySelectorAll('.cell').forEach((cell, index) => {
+        const row = Math.floor(index / 8);
+        const col = index % 8;
+        // Remove existing cell to clear any listeners
+        const newCell = cell.cloneNode(true);
+        // Add back the click handler
+        newCell.addEventListener('click', () => handleCellClick(row, col));
+        cell.parentNode.replaceChild(newCell, cell);
+    });
+
+    // Hide timers
+    document.body.classList.remove('timer-active');
+        
+    // Reset timer state
+    if (baseTimeSelect) {
+        timerState.whiteTime = parseInt(baseTimeSelect.value) * 60;
+        timerState.blackTime = parseInt(baseTimeSelect.value) * 60;
+    }
+    timerState.activeTimer = 'white';
+    timerState.running = false;
+    
+    if (timerState.intervalId) {
+        clearInterval(timerState.intervalId);
+        timerState.intervalId = null;
+    }
+    
+    // Update UI
+    if (whiteScoreElement) whiteScoreElement.textContent = '0';
+    if (blackScoreElement) blackScoreElement.textContent = '0';
+    
+    // Clear game log
+    if (messagesContentElement) messagesContentElement.innerHTML = '';
+    
+    // Hide game over banner
+    if (gameOverBanner) gameOverBanner.style.display = 'none';
+    
+    // Hide review controls
+    if (reviewControlsElement) reviewControlsElement.style.display = 'none';
+    
+    // Show timer setup again
+    if (timerSetupElement) timerSetupElement.style.display = 'flex';
+    
+    // Reset board
+    updateBoard();
+    
+    // Remove highlights
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('winning-line', 'last-move');
+    });
+    
+    // Remove selected move highlighting
+    document.querySelectorAll('.message-entry.selected-move').forEach(entry => {
+        entry.classList.remove('selected-move');
+    });
+    
+    // Update timer display
+    updateTimerDisplay();
+    
+    // Reset CORE's status
+    if (coreAvatar) {
+        updateCoreStatus('Standby');
+    }
+    
+    // Update CORE visibility based on game mode
+    if (gameModeSelect) {
+        // Initial update based on selected mode
+        updateCoreVisibility(gameModeSelect.value);
+        updateAIDifficultyVisibility(gameModeSelect.value);
+        updateGameModeClass(gameModeSelect.value);
+    }
+    document.body.classList.remove('game-started');
+}
     
     // Review mode functions
     function enableReviewMode() {
