@@ -54,7 +54,9 @@ function setupSocketListeners() {
         startMultiplayerGame(data.gameState);
         
         // Show notification
-        showNotification('Opponent joined! Game starting...');
+        if (typeof window.showNotification === 'function') {
+            window.showNotification('Opponent joined! Game starting...');
+        }
         
         console.log('Opponent joined the game');
     });
@@ -75,19 +77,25 @@ function setupSocketListeners() {
     
     // Opponent disconnected
     socket.on('opponentDisconnected', () => {
-        showNotification('Opponent disconnected');
+        if (typeof window.showNotification === 'function') {
+            window.showNotification('Opponent disconnected');
+        }
         handleOpponentDisconnect();
     });
     
     // Room error
     socket.on('roomError', (data) => {
-        showNotification(`Error: ${data.message}`);
+        if (typeof window.showNotification === 'function') {
+            window.showNotification(`Error: ${data.message}`);
+        }
         console.error('Room error:', data.message);
     });
     
     // Game error
     socket.on('gameError', (data) => {
-        showNotification(`Error: ${data.message}`);
+        if (typeof window.showNotification === 'function') {
+            window.showNotification(`Error: ${data.message}`);
+        }
         console.error('Game error:', data.message);
     });
 }
@@ -115,8 +123,10 @@ function makeMultiplayerMove(row, col) {
     if (!isMultiplayerMode || !socket || !roomCode) return false;
     
     // Ensure it's the player's turn
-    if (state.currentPlayer !== playerColor) {
-        showNotification("Not your turn");
+    if (window.state && window.state.currentPlayer !== playerColor) {
+        if (typeof window.showNotification === 'function') {
+            window.showNotification("Not your turn");
+        }
         return false;
     }
     
@@ -128,7 +138,9 @@ function makeMultiplayerMove(row, col) {
 // Handle an opponent's move
 function handleOpponentMove(row, col) {
     // Execute the move locally
-    handleCellClick(row, col);
+    if (typeof window.handleCellClick === 'function') {
+        window.handleCellClick(row, col);
+    }
 }
 
 // Emit a game event to other players
@@ -143,33 +155,43 @@ function handleGameEvent(eventType, eventData) {
     switch (eventType) {
         case 'updateBoard':
             // Update the local board
-            if (eventData.board) {
-                state.board = eventData.board;
-                updateBoard();
+            if (eventData.board && window.state) {
+                window.state.board = eventData.board;
+                if (typeof window.updateBoard === 'function') {
+                    window.updateBoard();
+                }
             }
             break;
             
         case 'switchPlayer':
             // Update the current player
-            switchToNextPlayer();
+            if (typeof window.switchToNextPlayer === 'function') {
+                window.switchToNextPlayer();
+            }
             break;
             
         case 'updateScore':
             // Update scores
-            if (eventData.whiteScore !== undefined) {
-                state.whiteScore = eventData.whiteScore;
+            if (window.state) {
+                if (eventData.whiteScore !== undefined) {
+                    window.state.whiteScore = eventData.whiteScore;
+                }
+                if (eventData.blackScore !== undefined) {
+                    window.state.blackScore = eventData.blackScore;
+                }
+                if (typeof window.updateScores === 'function') {
+                    window.updateScores();
+                }
             }
-            if (eventData.blackScore !== undefined) {
-                state.blackScore = eventData.blackScore;
-            }
-            updateScores();
             break;
             
         case 'gameOver':
             // Handle game over
-            state.gameOver = true;
-            if (eventData.winner) {
-                showGameOverMessage(eventData.winner);
+            if (window.state) {
+                window.state.gameOver = true;
+                if (eventData.winner && typeof window.showGameOverMessage === 'function') {
+                    window.showGameOverMessage(eventData.winner);
+                }
             }
             break;
     }
@@ -178,31 +200,42 @@ function handleGameEvent(eventType, eventData) {
 // Initialize a multiplayer game with received state
 function initializeMultiplayerGame(gameState) {
     // Reset the local game state
-    resetGame();
+    if (typeof window.resetGame === 'function') {
+        window.resetGame();
+    }
     
     // Update with server state
-    if (gameState) {
-        state.board = gameState.board;
-        state.currentPlayer = gameState.currentPlayer;
-        state.whiteScore = gameState.whiteScore;
-        state.blackScore = gameState.blackScore;
-        state.gameOver = gameState.gameOver;
-        state.gameStarted = true;
+    if (gameState && window.state) {
+        window.state.board = gameState.board;
+        window.state.currentPlayer = gameState.currentPlayer;
+        window.state.whiteScore = gameState.whiteScore;
+        window.state.blackScore = gameState.blackScore;
+        window.state.gameOver = gameState.gameOver;
+        window.state.gameStarted = true;
     }
     
     // Update the UI
-    updateBoard();
-    updateScores();
+    if (typeof window.updateBoard === 'function') {
+        window.updateBoard();
+    }
+    if (typeof window.updateScores === 'function') {
+        window.updateScores();
+    }
 }
 
 // Start a multiplayer game
 function startMultiplayerGame(gameState) {
     // Update the UI to show the game has started
-    document.querySelector('#timer-setup').style.display = 'none';
+    const timerSetup = document.querySelector('#timer-setup');
+    if (timerSetup) {
+        timerSetup.style.display = 'none';
+    }
     document.body.classList.add('game-started');
     
     // Initialize with the game state
-    state.gameStarted = true;
+    if (window.state) {
+        window.state.gameStarted = true;
+    }
     initializeMultiplayerGame(gameState);
     
     // Show whose turn it is
@@ -212,17 +245,22 @@ function startMultiplayerGame(gameState) {
 // Handle opponent disconnection
 function handleOpponentDisconnect() {
     // End the game or offer to wait for reconnection
-    addSystemMessage("Opponent disconnected. Game ended.");
+    if (typeof window.addSystemMessage === 'function') {
+        window.addSystemMessage("Opponent disconnected. Game ended.");
+    }
     
     // Optional: Show a button to return to home screen
-    if (getElement('messages-content')) {
+    const messagesContent = document.getElementById('messages-content');
+    if (messagesContent) {
         const disconnectMsg = document.createElement('div');
         disconnectMsg.className = 'message-entry';
         disconnectMsg.innerHTML = '<button id="return-home" style="margin-top: 10px;">Return to Home</button>';
-        getElement('messages-content').appendChild(disconnectMsg);
+        messagesContent.appendChild(disconnectMsg);
         
         document.getElementById('return-home').addEventListener('click', () => {
-            resetGame();
+            if (typeof window.resetGame === 'function') {
+                window.resetGame();
+            }
             showHomeScreen();
         });
     }
@@ -288,10 +326,14 @@ function showHomeScreen() {
 
 function updatePlayerTurnIndicator() {
     // Update whose turn it is based on currentPlayer and playerColor
-    if (state.currentPlayer === playerColor) {
-        showNotification("Your turn");
+    if (window.state && window.state.currentPlayer === playerColor) {
+        if (typeof window.showNotification === 'function') {
+            window.showNotification("Your turn");
+        }
     } else {
-        showNotification("Opponent's turn");
+        if (typeof window.showNotification === 'function') {
+            window.showNotification("Opponent's turn");
+        }
     }
 }
 
@@ -331,19 +373,27 @@ function createHomeScreenUI() {
     });
     
     document.getElementById('join-game-btn').addEventListener('click', () => {
-        const code = document.getElementById('room-code-input').value.trim().toUpperCase();
-        if (code.length === 6) {
-            joinGameRoom(code);
-            homeScreen.style.display = 'none';
-        } else {
-            showNotification('Please enter a valid 6-character room code');
+        const codeInput = document.getElementById('room-code-input');
+        if (codeInput) {
+            const code = codeInput.value.trim().toUpperCase();
+            if (code.length === 6) {
+                joinGameRoom(code);
+                homeScreen.style.display = 'none';
+            } else {
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification('Please enter a valid 6-character room code');
+                }
+            }
         }
     });
     
     document.getElementById('back-to-game-btn').addEventListener('click', () => {
         isMultiplayerMode = false;
         homeScreen.style.display = 'none';
-        document.querySelector('#timer-setup').style.display = 'flex';
+        const timerSetup = document.querySelector('#timer-setup');
+        if (timerSetup) {
+            timerSetup.style.display = 'flex';
+        }
     });
 }
 

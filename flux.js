@@ -2070,4 +2070,16 @@ setInterval(gameLoop, 100); // Check for AI moves every 100ms
 
 // Call syncCoreAvatars to keep the avatars in sync
 syncCoreAvatars();
+
+// Export important game functions and state to window object
+// This allows the multiplayer.js file to access these functions
+window.state = state;
+window.resetGame = resetGame;
+window.handleCellClick = handleCellClick;
+window.updateBoard = updateBoard;
+window.updateScores = updateScores;
+window.showNotification = showNotification;
+window.addSystemMessage = addSystemMessage;
+window.switchToNextPlayer = switchToNextPlayer;
+
 }); // End of DOMContentLoaded event handler
