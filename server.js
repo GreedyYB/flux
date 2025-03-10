@@ -77,37 +77,40 @@ io.on('connection', (socket) => {
     });
     
     // Handle a player's move
-    socket.on('makeMove', (data) => {
-        const { roomCode, row, col } = data;
-        
-        // Validate the room
-        if (!gameRooms[roomCode]) {
-            socket.emit('gameError', { message: 'Room not found' });
-            return;
-        }
-        
-        // Get the game state
-        const gameState = gameRooms[roomCode];
-        
-        // Find the player in the room
-        const playerIndex = gameState.players.findIndex(p => p.id === socket.id);
-        
-        if (playerIndex === -1) {
-            socket.emit('gameError', { message: 'You are not in this room' });
-            return;
-        }
-        
-        const playerColor = gameState.players[playerIndex].color;
-        
-        // Validate it's the player's turn
-        if (playerColor !== gameState.currentPlayer) {
-            socket.emit('gameError', { message: 'Not your turn' });
-            return;
-        }
-        
-        // Pass the move to all players in the room
-        io.to(roomCode).emit('moveMade', { row, col, playerColor });
-    });
+socket.on('makeMove', (data) => {
+    const { roomCode, row, col } = data;
+    
+    // Validate the room
+    if (!gameRooms[roomCode]) {
+        socket.emit('gameError', { message: 'Room not found' });
+        return;
+    }
+    
+    // Get the game state
+    const gameState = gameRooms[roomCode];
+    
+    // Find the player in the room
+    const playerIndex = gameState.players.findIndex(p => p.id === socket.id);
+    
+    if (playerIndex === -1) {
+        socket.emit('gameError', { message: 'You are not in this room' });
+        return;
+    }
+    
+    const playerColor = gameState.players[playerIndex].color;
+    
+    // Validate it's the player's turn
+    if (playerColor !== gameState.currentPlayer) {
+        socket.emit('gameError', { message: 'Not your turn' });
+        return;
+    }
+    
+    // Switch turns after move is made
+    gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+    
+    // Pass the move to all players in the room
+    io.to(roomCode).emit('moveMade', { row, col, playerColor });
+});
     
     // Handle game events like vector formation, node creation, etc.
     socket.on('gameEvent', (data) => {

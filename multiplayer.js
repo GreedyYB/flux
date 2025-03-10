@@ -62,12 +62,29 @@ function setupSocketListeners() {
     });
     
     // Move made event
-    socket.on('moveMade', (data) => {
-        // Handle the move made by the opponent
-        if (data.playerColor !== playerColor) {
-            handleOpponentMove(data.row, data.col);
+socket.on('moveMade', (data) => {
+    // Handle the move made by either player
+    if (data.playerColor === playerColor) {
+        // This is my own move that came back from the server
+        // Process it locally without sending it back to the server
+        if (typeof window.handleCellClick === 'function') {
+            const originalHandleCellClick = window.handleCellClick;
+            const originalMakeMove = window.multiplayer.makeMove;
+            
+            // Temporarily replace the makeMove function to prevent loop
+            window.multiplayer.makeMove = () => true;
+            
+            // Call handleCellClick directly
+            originalHandleCellClick(data.row, data.col);
+            
+            // Restore original function
+            window.multiplayer.makeMove = originalMakeMove;
         }
-    });
+    } else {
+        // This is the opponent's move
+        handleOpponentMove(data.row, data.col);
+    }
+});
     
     // Game event
     socket.on('gameEvent', (data) => {
@@ -122,27 +139,20 @@ function joinGameRoom(code) {
 function makeMultiplayerMove(row, col) {
     if (!isMultiplayerMode || !socket || !roomCode) return false;
     
-    // Ensure it's the player's turn
-    if (window.state && window.state.currentPlayer !== playerColor) {
-        if (typeof window.showNotification === 'function') {
-            window.showNotification("Not your turn");
-        }
-        return false;
-    }
-    
-    // Send the move to the server
+    // Send the move to the server and let the server validate if it's the player's turn
     socket.emit('makeMove', { roomCode, row, col });
+    
+    // Always return true - the server will send back an error if it's not the player's turn
     return true;
 }
 
 // Handle an opponent's move
 function handleOpponentMove(row, col) {
     try {
-        // Skip the multiplayer check when processing opponent's move
         if (!window.state) return;
         
-        // Get opponent's color (opposite of player's color)
-        const opponentColor = playerColor === 'white' ? 'black' : 'white';
+        // Get the color from the move data - this is the color of the piece being placed
+        const pieceColor = playerColor === 'white' ? 'black' : 'white';
         
         // Save current board state to history
         if (typeof window.saveCurrentStateToHistory === 'function') {
@@ -151,11 +161,11 @@ function handleOpponentMove(row, col) {
         
         // Place opponent's ion directly
         if (typeof window.placeIon === 'function') {
-            window.placeIon(row, col, opponentColor);
+            window.placeIon(row, col, pieceColor);
         } else {
             // Fallback if placeIon isn't available
             window.state.board[row][col] = {
-                color: opponentColor,
+                color: pieceColor,
                 protectionLevel: 0
             };
         }
@@ -172,7 +182,7 @@ function handleOpponentMove(row, col) {
         // Check for vectors/lines just like in handleCellClick
         const checkLines = function() {
             if (typeof window.checkForLines === 'function') {
-                return window.checkForLines(row, col, opponentColor);
+                return window.checkForLines(row, col, pieceColor);
             }
             return { linesFormed: 0 };
         };
@@ -184,7 +194,7 @@ function handleOpponentMove(row, col) {
             window.state.board[row][col].protectionLevel = linesInfo.linesFormed;
             
             // Update score
-            if (opponentColor === 'white') {
+            if (pieceColor === 'white') {
                 window.state.whiteScore += linesInfo.linesFormed;
             } else {
                 window.state.blackScore += linesInfo.linesFormed;
@@ -205,12 +215,16 @@ function handleOpponentMove(row, col) {
             }
         }
         
-        // Don't call switchToNextPlayer - the server handles that
+        // Update the current player locally after the move
+        window.state.currentPlayer = window.state.currentPlayer === 'white' ? 'black' : 'white';
         
         // Update the board display
         if (typeof window.updateBoard === 'function') {
             window.updateBoard();
         }
+        
+        // Update turn indicator
+        updatePlayerTurnIndicator();
         
     } catch (error) {
         console.error("Error handling opponent move:", error);
