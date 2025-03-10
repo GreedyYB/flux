@@ -946,20 +946,21 @@ function switchToNextPlayer() {
     }
 
     // Handle cell click
-function handleCellClick(row, col) {
-    try {
-        // Check if this is an online multiplayer game
-        const isMultiplayerActive = window.multiplayer && typeof window.multiplayer.isMultiplayerActive === 'function' && 
-            window.multiplayer.isMultiplayerActive();
-        
-        if (isMultiplayerActive) {
-            // In multiplayer, send the move to the server and let it handle the rest
-            if (window.multiplayer && typeof window.multiplayer.makeMove === 'function') {
-                const moveMade = window.multiplayer.makeMove(row, col);
-                if (!moveMade) {
-                    // If the move wasn't made (not your turn, etc.), return early
-                    return;
+    function handleCellClick(row, col) {
+        try {
+            // Check if this is an online multiplayer game
+            const isMultiplayerActive = window.multiplayer && typeof window.multiplayer.isMultiplayerActive === 'function' && 
+                window.multiplayer.isMultiplayerActive();
+            
+            if (isMultiplayerActive) {
+                // In multiplayer, ONLY send the move to the server and let it handle the rest
+                // The server will update both clients with the new game state
+                if (window.multiplayer && typeof window.multiplayer.makeMove === 'function') {
+                    window.multiplayer.makeMove(row, col);
                 }
+                // Important: Return early - don't process the move locally in multiplayer mode
+                return;
+            }
             }
         }
         
@@ -2085,5 +2086,19 @@ window.placeIon = placeIon;
 window.checkForLines = checkForLines;
 window.saveCurrentStateToHistory = saveCurrentStateToHistory;
 window.addGameLogEntry = addGameLogEntry;
+window.state = state;
+window.resetGame = resetGame;
+window.handleCellClick = handleCellClick;
+window.placeIon = placeIon;
+window.updateBoard = updateBoard;
+window.updateScores = updateScores;
+window.showNotification = showNotification;
+window.addSystemMessage = addSystemMessage;
+window.switchToNextPlayer = switchToNextPlayer;
+window.checkForLines = checkForLines;
+window.saveCurrentStateToHistory = saveCurrentStateToHistory;
+window.addGameLogEntry = addGameLogEntry;
+window.processVectorsSequentially = processVectorsSequentially;
+window.enableReviewMode = enableReviewMode;
 
 }); // End of DOMContentLoaded event handler
