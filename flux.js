@@ -2081,5 +2081,9 @@ window.updateScores = updateScores;
 window.showNotification = showNotification;
 window.addSystemMessage = addSystemMessage;
 window.switchToNextPlayer = switchToNextPlayer;
+window.placeIon = placeIon;
+window.checkForLines = checkForLines;
+window.saveCurrentStateToHistory = saveCurrentStateToHistory;
+window.addGameLogEntry = addGameLogEntry;
 
 }); // End of DOMContentLoaded event handler

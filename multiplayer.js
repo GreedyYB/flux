@@ -137,9 +137,83 @@ function makeMultiplayerMove(row, col) {
 
 // Handle an opponent's move
 function handleOpponentMove(row, col) {
-    // Execute the move locally
-    if (typeof window.handleCellClick === 'function') {
-        window.handleCellClick(row, col);
+    try {
+        // Skip the multiplayer check when processing opponent's move
+        if (!window.state) return;
+        
+        // Get opponent's color (opposite of player's color)
+        const opponentColor = playerColor === 'white' ? 'black' : 'white';
+        
+        // Save current board state to history
+        if (typeof window.saveCurrentStateToHistory === 'function') {
+            window.saveCurrentStateToHistory();
+        }
+        
+        // Place opponent's ion directly
+        if (typeof window.placeIon === 'function') {
+            window.placeIon(row, col, opponentColor);
+        } else {
+            // Fallback if placeIon isn't available
+            window.state.board[row][col] = {
+                color: opponentColor,
+                protectionLevel: 0
+            };
+        }
+        
+        // Update last move
+        window.state.lastMove = { row, col };
+        
+        // Increment move counter
+        window.state.moveCount++;
+        
+        // Get position label for game log
+        const positionLabel = String.fromCharCode(65 + col) + (8 - row);
+        
+        // Check for vectors/lines just like in handleCellClick
+        const checkLines = function() {
+            if (typeof window.checkForLines === 'function') {
+                return window.checkForLines(row, col, opponentColor);
+            }
+            return { linesFormed: 0 };
+        };
+        
+        const linesInfo = checkLines();
+        
+        if (linesInfo.linesFormed > 0) {
+            // Update protection level
+            window.state.board[row][col].protectionLevel = linesInfo.linesFormed;
+            
+            // Update score
+            if (opponentColor === 'white') {
+                window.state.whiteScore += linesInfo.linesFormed;
+            } else {
+                window.state.blackScore += linesInfo.linesFormed;
+            }
+            
+            // Add to game log with N notation
+            const nodeLabel = linesInfo.linesFormed > 1 ? 
+                `${positionLabel}<span class="node-marker">N</span>${linesInfo.linesFormed}` : 
+                `${positionLabel}<span class="node-marker">N</span>`;
+            
+            if (typeof window.addGameLogEntry === 'function') {
+                window.addGameLogEntry(nodeLabel);
+            }
+        } else {
+            // Just add position to log
+            if (typeof window.addGameLogEntry === 'function') {
+                window.addGameLogEntry(positionLabel);
+            }
+        }
+        
+        // Don't call switchToNextPlayer - the server handles that
+        
+        // Update the board display
+        if (typeof window.updateBoard === 'function') {
+            window.updateBoard();
+        }
+        
+    } catch (error) {
+        console.error("Error handling opponent move:", error);
     }
 }
 
