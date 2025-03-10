@@ -946,22 +946,20 @@ function switchToNextPlayer() {
     }
 
     // Handle cell click
-    function handleCellClick(row, col) {
-        try {
-            // Check if this is an online multiplayer game
-            const isMultiplayerActive = window.multiplayer && typeof window.multiplayer.isMultiplayerActive === 'function' && 
-                window.multiplayer.isMultiplayerActive();
-            
-            if (isMultiplayerActive) {
-                // In multiplayer, ONLY send the move to the server and let it handle the rest
-                // The server will update both clients with the new game state
-                if (window.multiplayer && typeof window.multiplayer.makeMove === 'function') {
-                    window.multiplayer.makeMove(row, col);
-                }
-                // Important: Return early - don't process the move locally in multiplayer mode
-                return;
+function handleCellClick(row, col) {
+    try {
+        // Check if this is an online multiplayer game
+        const isMultiplayerActive = window.multiplayer && typeof window.multiplayer.isMultiplayerActive === 'function' && 
+            window.multiplayer.isMultiplayerActive();
+        
+        if (isMultiplayerActive) {
+            // In multiplayer, ONLY send the move to the server and let it handle the rest
+            // The server will update both clients with the new game state
+            if (window.multiplayer && typeof window.multiplayer.makeMove === 'function') {
+                window.multiplayer.makeMove(row, col);
             }
-            }
+            // Important: Return early - don't process the move locally in multiplayer mode
+            return;
         }
         
         // If in review mode, ignore clicks on the board
