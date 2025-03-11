@@ -434,40 +434,41 @@ socket.on('makeMove', (data) => {
         gameOver: result.gameOver,
         winner: result.winner
     });
-});
+    });
     
     // Handle player disconnection
-socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    
-    // If waiting player disconnects
-    if (waitingPlayer && waitingPlayer.id === socket.id) {
-        waitingPlayer = null;
-        return;
-    }
-    
-    // Check all active games
-    for (const gameId in activeGames) {
-        const game = activeGames[gameId];
-        const playerIndex = game.players.findIndex(p => p.id === socket.id);
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
         
-        if (playerIndex !== -1) {
-            // Get player color
-            const playerColor = game.players[playerIndex].color;
-            
-            // Notify other player
-            for (const player of game.players) {
-                if (player.id !== socket.id) {
-                    io.to(player.id).emit('opponentDisconnected', { playerColor });
-                }
-            }
-            
-            // Remove the game
-            delete activeGames[gameId];
-            console.log(`Game ${gameId} ended due to player disconnect`);
-            break;
+        // If waiting player disconnects
+        if (waitingPlayer && waitingPlayer.id === socket.id) {
+            waitingPlayer = null;
+            return;
         }
-    }
+        
+        // Check all active games
+        for (const gameId in activeGames) {
+            const game = activeGames[gameId];
+            const playerIndex = game.players.findIndex(p => p.id === socket.id);
+            
+            if (playerIndex !== -1) {
+                // Get player color
+                const playerColor = game.players[playerIndex].color;
+                
+                // Notify other player
+                for (const player of game.players) {
+                    if (player.id !== socket.id) {
+                        io.to(player.id).emit('opponentDisconnected', { playerColor });
+                    }
+                }
+                
+                // Remove the game
+                delete activeGames[gameId];
+                console.log(`Game ${gameId} ended due to player disconnect`);
+                break;
+            }
+        }
+    });
 });
 
 // Start the server
