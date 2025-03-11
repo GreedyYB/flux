@@ -55,10 +55,16 @@ socket.on('gameMatched', (data) => {
     console.log("After setting playerColor:", playerColor);
     isMultiplayerMode = true;
     
-    // Hide home screen and waiting indicator
+    // Hide home screen
     const homeScreen = document.getElementById('home-screen');
     if (homeScreen) {
         homeScreen.style.display = 'none';
+    }
+    
+    // Hide waiting indicator
+    const waitingIndicator = document.getElementById('waiting-indicator');
+    if (waitingIndicator) {
+        waitingIndicator.style.display = 'none';
     }
     
     // Initialize game with server state
@@ -184,10 +190,19 @@ function makeMultiplayerMove(row, col) {
 function initializeGameWithServerState(gameState) {
     console.log("playerColor before resetLocalGame:", playerColor);
     
+    // Save multiplayer state
+    const savedPlayerColor = playerColor;
+    const savedGameId = gameId;
+    
     // First reset the local game
     resetLocalGame();
     
-    console.log("playerColor after resetLocalGame:", playerColor);
+    // Restore multiplayer state
+    playerColor = savedPlayerColor;
+    gameId = savedGameId;
+    isMultiplayerMode = true;
+    
+    console.log("playerColor after resetLocalGame (restored):", playerColor);
     
     // Then update with the server state
     updateGameWithServerState(gameState);
