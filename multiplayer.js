@@ -38,39 +38,41 @@ function setupSocketListeners() {
     });
     
     // Game matched event
-    socket.on('gameMatched', (data) => {
-        console.log("Game matched data received:", data);
-        
-        if (!data || !data.gameId) {
-            console.error("Invalid game data received:", data);
-            if (typeof window.showNotification === 'function') {
-                window.showNotification("Error starting game. Please try again.");
-            }
-            return;
-        }
-        
-        gameId = data.gameId;
-        playerColor = data.playerColor;
-        isMultiplayerMode = true;
-        
-        // Hide home screen and waiting indicator
-        const homeScreen = document.getElementById('home-screen');
-        if (homeScreen) {
-            homeScreen.style.display = 'none';
-        }
-        
-        // Initialize game with server state
-        if (data.gameState) {
-            initializeGameWithServerState(data.gameState);
-        }
-        
-        // Show notification
+socket.on('gameMatched', (data) => {
+    console.log("Game matched data received:", data);
+    
+    if (!data || !data.gameId) {
+        console.error("Invalid game data received:", data);
         if (typeof window.showNotification === 'function') {
-            window.showNotification('Opponent found! Game starting...');
+            window.showNotification("Error starting game. Please try again.");
         }
-        
-        console.log(`Matched in game: ${gameId}, You are: ${playerColor}`);
-    });
+        return;
+    }
+    
+    console.log("Before setting playerColor:", playerColor);
+    gameId = data.gameId;
+    playerColor = data.playerColor;
+    console.log("After setting playerColor:", playerColor);
+    isMultiplayerMode = true;
+    
+    // Hide home screen and waiting indicator
+    const homeScreen = document.getElementById('home-screen');
+    if (homeScreen) {
+        homeScreen.style.display = 'none';
+    }
+    
+    // Initialize game with server state
+    if (data.gameState) {
+        initializeGameWithServerState(data.gameState);
+    }
+    
+    // Show notification
+    if (typeof window.showNotification === 'function') {
+        window.showNotification('Opponent found! Game starting...');
+    }
+    
+    console.log(`Matched in game: ${gameId}, You are: ${playerColor}`);
+});
     
     // Game update event (new unified event for moves and state updates)
     socket.on('gameUpdate', (data) => {
@@ -180,11 +182,17 @@ function makeMultiplayerMove(row, col) {
 
 // Initialize the game with a server state
 function initializeGameWithServerState(gameState) {
+    console.log("playerColor before resetLocalGame:", playerColor);
+    
     // First reset the local game
     resetLocalGame();
     
+    console.log("playerColor after resetLocalGame:", playerColor);
+    
     // Then update with the server state
     updateGameWithServerState(gameState);
+    
+    console.log("playerColor after updateGameWithServerState:", playerColor);
 }
 
 // Update the game with server state
