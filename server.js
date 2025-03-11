@@ -10,16 +10,18 @@ const io = socketIo(server);
 // Serve static files from the current directory
 app.use(express.static(path.join(__dirname)));
 
-// Game rooms storage
-const gameRooms = {};
-
 // Game constants - match those in client
 const BOARD_SIZE = 8;
 const LINE_LENGTH = 4;
 
-// Generate a random 6-character room code
-function generateRoomCode() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+// Waiting players queue and active games storage
+let waitingPlayer = null;
+const activeGames = {};
+let gameCounter = 0;
+
+// Generate a simple game ID
+function generateGameId() {
+    return `game_${++gameCounter}`;
 }
 
 // Server-side game logic
@@ -318,149 +320,154 @@ function checkForNexus(board) {
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
     
-    // Create a new game room
-    socket.on('createRoom', () => {
-        const roomCode = generateRoomCode();
+    // Player wants to join multiplayer queue
+    socket.on('joinMultiplayerQueue', () => {
+        console.log('Player joining multiplayer queue:', socket.id);
         
-        // Create the room with initial game state
-        gameRooms[roomCode] = {
-            players: [{ id: socket.id, color: 'white' }],
-            currentPlayer: 'white',
-            board: Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null)),
-            whiteScore: 0,
-            blackScore: 0,
-            gameOver: false,
-            moveCount: 0,
-            lastMove: null,
-            moveHistory: [],
-            gameStarted: false
-        };
-        
-        // Join the socket to the room
-        socket.join(roomCode);
-        
-        // Send the room code back to the client
-        socket.emit('roomCreated', { 
-            roomCode, 
-            playerColor: 'white',
-            gameState: gameRooms[roomCode]
-        });
-        
-        console.log(`Room created: ${roomCode}`);
+        if (waitingPlayer === null) {
+            // This is the first player, put them in waiting
+            waitingPlayer = {
+                id: socket.id,
+                color: 'white'  // First player is always white
+            };
+            
+            // Notify player they're waiting
+            socket.emit('waitingForOpponent');
+            console.log(`Player ${socket.id} waiting for opponent`);
+        } else {
+            // We have a player waiting, match them up!
+            const gameId = generateGameId();
+            
+            // Create the game with initial game state
+            activeGames[gameId] = {
+                players: [
+                    waitingPlayer,
+                    { id: socket.id, color: 'black' }
+                ],
+                currentPlayer: 'white',
+                board: Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null)),
+                whiteScore: 0,
+                blackScore: 0,
+                gameOver: false,
+                moveCount: 0,
+                lastMove: null,
+                moveHistory: [],
+                gameStarted: true
+            };
+            
+            // Join both sockets to the game room
+            socket.join(gameId);
+            const waitingSocket = io.sockets.sockets.get(waitingPlayer.id);
+            if (waitingSocket) {
+                waitingSocket.join(gameId);
+            }
+            
+            // Notify both players
+            socket.emit('gameMatched', { 
+                gameId, 
+                playerColor: 'black',
+                gameState: activeGames[gameId]
+            });
+            
+            io.to(waitingPlayer.id).emit('gameMatched', { 
+                gameId, 
+                playerColor: 'white',
+                gameState: activeGames[gameId]
+            });
+            
+            console.log(`Players matched in game: ${gameId}`);
+            
+            // Reset waiting player
+            waitingPlayer = null;
+        }
     });
     
-    // Join an existing game room
-    socket.on('joinRoom', (data) => {
-        const { roomCode } = data;
-        
-        // Check if the room exists
-        if (!gameRooms[roomCode]) {
-            socket.emit('roomError', { message: 'Room not found' });
-            return;
+    // Player cancels waiting for match
+    socket.on('cancelWaiting', () => {
+        if (waitingPlayer && waitingPlayer.id === socket.id) {
+            waitingPlayer = null;
+            console.log(`Player ${socket.id} canceled waiting`);
         }
-        
-        // Check if the room is full
-        if (gameRooms[roomCode].players.length >= 2) {
-            socket.emit('roomError', { message: 'Room is full' });
-            return;
-        }
-        
-        // Add the player to the room
-        gameRooms[roomCode].players.push({ id: socket.id, color: 'black' });
-        
-        // Mark game as started
-        gameRooms[roomCode].gameStarted = true;
-        
-        // Join the socket to the room
-        socket.join(roomCode);
-        
-        // Send current game state to the joining player
-        socket.emit('roomJoined', { 
-            roomCode, 
-            playerColor: 'black', 
-            gameState: gameRooms[roomCode] 
-        });
-        
-        // Notify the other player that someone joined
-        socket.to(roomCode).emit('opponentJoined', { 
-            gameState: gameRooms[roomCode] 
-        });
-        
-        console.log(`Player joined room: ${roomCode}`);
     });
     
     // Handle a player's move
-    socket.on('makeMove', (data) => {
-        const { roomCode, row, col } = data;
-        
-        // Validate the room
-        if (!gameRooms[roomCode]) {
-            socket.emit('gameError', { message: 'Room not found' });
-            return;
-        }
-        
-        // Get the game state
-        const gameState = gameRooms[roomCode];
-        
-        // Find the player in the room
-        const playerIndex = gameState.players.findIndex(p => p.id === socket.id);
-        
-        if (playerIndex === -1) {
-            socket.emit('gameError', { message: 'You are not in this room' });
-            return;
-        }
-        
-        const playerColor = gameState.players[playerIndex].color;
-        
-        // Validate it's the player's turn
-        if (playerColor !== gameState.currentPlayer) {
-            socket.emit('gameError', { message: 'Not your turn' });
-            return;
-        }
-        
-        // Process the move on the server
-        const result = processMove(gameState, row, col, playerColor);
-        
-        if (!result.valid) {
-            socket.emit('gameError', { message: result.message });
-            return;
-        }
-        
-        // Send the updated game state to all players
-        io.to(roomCode).emit('gameUpdate', {
-            move: result.move,
-            gameState: gameState,
-            gameOver: result.gameOver,
-            winner: result.winner
-        });
+socket.on('makeMove', (data) => {
+    const { gameId, row, col } = data;
+    
+    // Validate the game
+    if (!activeGames[gameId]) {
+        socket.emit('gameError', { message: 'Game not found' });
+        return;
+    }
+    
+    // Get the game state
+    const gameState = activeGames[gameId];
+    
+    // Find the player in the game
+    const playerIndex = gameState.players.findIndex(p => p.id === socket.id);
+    
+    if (playerIndex === -1) {
+        socket.emit('gameError', { message: 'You are not in this game' });
+        return;
+    }
+    
+    const playerColor = gameState.players[playerIndex].color;
+    
+    // Validate it's the player's turn
+    if (playerColor !== gameState.currentPlayer) {
+        socket.emit('gameError', { message: 'Not your turn' });
+        return;
+    }
+    
+    // Process the move on the server
+    const result = processMove(gameState, row, col, playerColor);
+    
+    if (!result.valid) {
+        socket.emit('gameError', { message: result.message });
+        return;
+    }
+    
+    // Send the updated game state to all players
+    io.to(gameId).emit('gameUpdate', {
+        move: result.move,
+        gameState: gameState,
+        gameOver: result.gameOver,
+        winner: result.winner
     });
+});
     
     // Handle player disconnection
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+    
+    // If waiting player disconnects
+    if (waitingPlayer && waitingPlayer.id === socket.id) {
+        waitingPlayer = null;
+        return;
+    }
+    
+    // Check all active games
+    for (const gameId in activeGames) {
+        const game = activeGames[gameId];
+        const playerIndex = game.players.findIndex(p => p.id === socket.id);
         
-        // Find any rooms the player was in
-        for (const roomCode in gameRooms) {
-            const playerIndex = gameRooms[roomCode].players.findIndex(p => p.id === socket.id);
+        if (playerIndex !== -1) {
+            // Get player color
+            const playerColor = game.players[playerIndex].color;
             
-            if (playerIndex !== -1) {
-                // Get player color
-                const playerColor = gameRooms[roomCode].players[playerIndex].color;
-                
-                // Notify other players in the room
-                socket.to(roomCode).emit('opponentDisconnected', { playerColor });
-                
-                // If there are no players left, delete the room
-                if (gameRooms[roomCode].players.length <= 1) {
-                    delete gameRooms[roomCode];
-                    console.log(`Room ${roomCode} deleted`);
-                } else {
-                    // Remove the player from the room
-                    gameRooms[roomCode].players.splice(playerIndex, 1);
+            // Notify other player
+            for (const player of game.players) {
+                if (player.id !== socket.id) {
+                    io.to(player.id).emit('opponentDisconnected', { playerColor });
                 }
             }
+            
+            // Remove the game
+            delete activeGames[gameId];
+            console.log(`Game ${gameId} ended due to player disconnect`);
+            break;
         }
-    });
+    }
 });
 
 // Start the server

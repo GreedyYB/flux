@@ -2,7 +2,7 @@
 
 // Initialize variables
 let socket;
-let roomCode = null;
+let gameId = null;  // Changed from roomCode to gameId
 let playerColor = null;
 let isMultiplayerMode = false;
 let isProcessingMove = false;
@@ -31,63 +31,45 @@ function initializeMultiplayer() {
 
 // Set up Socket.io event listeners
 function setupSocketListeners() {
-    // Room created event
-socket.on('roomCreated', (data) => {
-    console.log("Room created data received:", data);
+    // Waiting for opponent event
+    socket.on('waitingForOpponent', () => {
+        console.log('Waiting for opponent...');
+        // UI already updated when the Find Game button is clicked
+    });
     
-    if (!data || data.roomCode === undefined) {
-        console.error("Invalid room data received:", data);
-        if (typeof window.showNotification === 'function') {
-            window.showNotification("Error creating room. Please try again.");
+    // Game matched event
+    socket.on('gameMatched', (data) => {
+        console.log("Game matched data received:", data);
+        
+        if (!data || !data.gameId) {
+            console.error("Invalid game data received:", data);
+            if (typeof window.showNotification === 'function') {
+                window.showNotification("Error starting game. Please try again.");
+            }
+            return;
         }
-        return;
-    }
-    
-    roomCode = data.roomCode;
-    playerColor = data.playerColor;
-    isMultiplayerMode = true;
-    
-    // Initialize game with server state
-    if (data.gameState) {
-        initializeGameWithServerState(data.gameState);
-    }
-    
-    // Update UI to show room code and waiting for opponent
-    showRoomCode(roomCode);
-    showWaitingMessage();
-    
-    console.log(`Room created: ${roomCode}, You are: ${playerColor}`);
-});
-    
-    // Room joined event
-    socket.on('roomJoined', (data) => {
-        roomCode = data.roomCode;
+        
+        gameId = data.gameId;
         playerColor = data.playerColor;
         isMultiplayerMode = true;
         
-        // Update UI to show room code
-        showRoomCode(roomCode);
+        // Hide home screen and waiting indicator
+        const homeScreen = document.getElementById('home-screen');
+        if (homeScreen) {
+            homeScreen.style.display = 'none';
+        }
         
         // Initialize game with server state
-        initializeGameWithServerState(data.gameState);
-        
-        console.log(`Joined room: ${roomCode}, You are: ${playerColor}`);
-    });
-    
-    // Opponent joined event
-    socket.on('opponentJoined', (data) => {
-        // Hide waiting message and start the game
-        hideWaitingMessage();
-        
-        // Update game with server state
-        updateGameWithServerState(data.gameState);
+        if (data.gameState) {
+            initializeGameWithServerState(data.gameState);
+        }
         
         // Show notification
         if (typeof window.showNotification === 'function') {
-            window.showNotification('Opponent joined! Game starting...');
+            window.showNotification('Opponent found! Game starting...');
         }
         
-        console.log('Opponent joined the game');
+        console.log(`Matched in game: ${gameId}, You are: ${playerColor}`);
     });
     
     // Game update event (new unified event for moves and state updates)
@@ -171,19 +153,10 @@ function handleOpponentDisconnect() {
     }
 }
 
-// Create a new multiplayer game room
-function createGameRoom() {
+// Join the matchmaking queue
+function joinMatchmaking() {
     if (socket) {
-        socket.emit('createRoom');
-    } else {
-        console.error('Socket not initialized');
-    }
-}
-
-// Join an existing game room
-function joinGameRoom(code) {
-    if (socket) {
-        socket.emit('joinRoom', { roomCode: code });
+        socket.emit('joinMultiplayerQueue');
     } else {
         console.error('Socket not initialized');
     }
@@ -191,14 +164,14 @@ function joinGameRoom(code) {
 
 // Make a move in multiplayer game
 function makeMultiplayerMove(row, col) {
-    if (!isMultiplayerMode || !socket || !roomCode) return false;
+    if (!isMultiplayerMode || !socket || !gameId) return false;
     
     // Prevent multiple rapid moves
     if (isProcessingMove) return false;
     isProcessingMove = true;
     
     // Send the move to the server
-    socket.emit('makeMove', { roomCode, row, col });
+    socket.emit('makeMove', { gameId, row, col });
     
     // Return true to indicate the move was sent
     // The server will validate it and send back a response
@@ -435,16 +408,17 @@ function createHomeScreenUI() {
     homeScreen.id = 'home-screen';
     homeScreen.className = 'home-screen';
     
-    // Create content
+    // Create content for simple matchmaking
     homeScreen.innerHTML = `
         <h2>Flux - Multiplayer Mode</h2>
         <div class="home-buttons">
-            <button id="create-game-btn" class="home-button">Create New Game</button>
-            <div class="join-game-container">
-                <button id="join-game-btn" class="home-button">Join Game</button>
-                <input type="text" id="room-code-input" placeholder="Enter room code" maxlength="6">
-            </div>
+            <button id="find-game-btn" class="home-button">Find Game</button>
             <button id="back-to-game-btn" class="home-button">Back to Single Player</button>
+        </div>
+        <div id="waiting-indicator" style="display: none; margin-top: 20px; text-align: center;">
+            <p>Waiting for an opponent...</p>
+            <div class="loading-spinner"></div>
+            <button id="cancel-wait-btn" class="home-button" style="margin-top: 10px;">Cancel</button>
         </div>
     `;
     
@@ -452,23 +426,30 @@ function createHomeScreenUI() {
     document.body.insertBefore(homeScreen, document.querySelector('.header-area'));
     
     // Add event listeners
-    document.getElementById('create-game-btn').addEventListener('click', () => {
-        createGameRoom();
-        homeScreen.style.display = 'none';
+    document.getElementById('find-game-btn').addEventListener('click', () => {
+        // Show waiting indicator
+        document.getElementById('waiting-indicator').style.display = 'block';
+        document.getElementById('find-game-btn').style.display = 'none';
+        
+        // Join the matchmaking queue
+        if (socket) {
+            socket.emit('joinMultiplayerQueue');
+        } else {
+            console.error('Socket not initialized');
+            if (typeof window.showNotification === 'function') {
+                window.showNotification('Connection error. Please try again.');
+            }
+        }
     });
     
-    document.getElementById('join-game-btn').addEventListener('click', () => {
-        const codeInput = document.getElementById('room-code-input');
-        if (codeInput) {
-            const code = codeInput.value.trim().toUpperCase();
-            if (code.length === 6) {
-                joinGameRoom(code);
-                homeScreen.style.display = 'none';
-            } else {
-                if (typeof window.showNotification === 'function') {
-                    window.showNotification('Please enter a valid 6-character room code');
-                }
-            }
+    document.getElementById('cancel-wait-btn').addEventListener('click', () => {
+        // Hide waiting indicator
+        document.getElementById('waiting-indicator').style.display = 'none';
+        document.getElementById('find-game-btn').style.display = 'block';
+        
+        // Cancel waiting
+        if (socket) {
+            socket.emit('cancelWaiting');
         }
     });
     
@@ -485,8 +466,7 @@ function createHomeScreenUI() {
 // Export functions for use in flux.js
 window.multiplayer = {
     initialize: initializeMultiplayer,
-    createRoom: createGameRoom,
-    joinRoom: joinGameRoom,
+    joinMatchmaking: joinMatchmaking,
     makeMove: makeMultiplayerMove,
     showHomeScreen: showHomeScreen,
     isMultiplayerActive: () => isMultiplayerMode
