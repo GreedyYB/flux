@@ -89,11 +89,14 @@ this.socket.on('gameMatched', (data) => {
         // Add game-started class to body
         document.body.classList.add('game-started');
         
-        // Hide timer setup
-        const timerSetupElement = document.getElementById('timer-setup');
-        if (timerSetupElement) {
-            timerSetupElement.style.display = 'none';
-        }
+        // Hide timer setup without causing layout shifts
+const timerSetupElement = document.getElementById('timer-setup');
+if (timerSetupElement) {
+    // Add these styles to preserve layout space but make element invisible
+    timerSetupElement.style.visibility = 'hidden';
+    timerSetupElement.style.opacity = '0';
+    timerSetupElement.style.pointerEvents = 'none'; // Prevents interaction
+}
     }
 });
         

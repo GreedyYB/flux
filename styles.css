@@ -20,11 +20,11 @@ h2 {
     font-size: 1.2rem;
 }
 
+/* Fixed layout for game container using grid */
 .game-container {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: 200px 1fr 250px;
+    gap: 20px;
     width: 100%;
     max-width: 100%;
 }
@@ -180,7 +180,7 @@ body.game-started.ai-mode #core-avatar {
     display: flex !important;
 }
 
-/* Timer Setup Section */
+/* Timer Setup Section - Fixed height to prevent layout shifts */
 .timer-setup {
     background-color: #2a2a4a;
     border-radius: 5px;
@@ -191,6 +191,23 @@ body.game-started.ai-mode #core-avatar {
     align-items: flex-start;
     width: 100%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    min-height: 150px; /* Fixed height to prevent layout shifts */
+    box-sizing: border-box;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+/* Hide timer options with opacity/visibility instead of display:none */
+#timer-options {
+    height: 80px; /* Fixed height */
+    overflow: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    width: 100%;
+}
+
+#timer-options.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .timer-option-row {
@@ -408,12 +425,13 @@ select {
 
 /* ==================== CONTROLS SECTION ==================== */
 
-/* Controls sidebar */
+/* Controls sidebar - Fixed position in grid */
 .controls-sidebar {
     display: flex;
     flex-direction: column;
     gap: 15px;
     width: 200px;
+    grid-column: 1;
 }
 
 .controls {
@@ -452,7 +470,7 @@ button:hover {
     background-color: #c0392b;
 }
 
-/* Game mode and AI difficulty selectors */
+/* Game mode and AI difficulty selectors - Fixed heights to prevent layout shifts */
 .game-mode, .ai-difficulty {
     background-color: #2a2a4a;
     padding: 10px;
@@ -462,9 +480,12 @@ button:hover {
     align-items: flex-start;
     width: 100%;
     margin: 0 0 10px 0;
+    min-height: 100px; /* Fixed height to prevent layout shifts */
+    box-sizing: border-box;
+    transition: opacity 0.3s, visibility 0.3s;
 }
 
-/* Player Color Selection */
+/* Player Color Selection - Fixed height to prevent layout shifts */
 .player-color {
     background-color: #2a2a4a;
     padding: 10px;
@@ -473,6 +494,9 @@ button:hover {
     flex-direction: column;
     align-items: flex-start;
     width: 100%;
+    min-height: 100px; /* Fixed height to prevent layout shifts */
+    box-sizing: border-box;
+    transition: opacity 0.3s, visibility 0.3s;
 }
 
 .player-color label {
@@ -525,13 +549,25 @@ button:hover {
     background-color: #2c3e50;
 }
 
-/* Hide game mode, difficulty, and player color selectors when game is in progress */
+/* Hide with opacity instead of display:none to prevent layout shifts */
+.layout-preserved {
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.layout-preserved.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Hide game mode, difficulty, and player color selectors with opacity/visibility */
 body.game-started .game-mode,
 body.game-started .ai-difficulty,
 body.game-started .player-color {
-    display: none !important;
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
+    position: absolute; /* Remove from layout flow when hidden */
 }
 
 .game-mode label, .ai-difficulty label {
@@ -548,8 +584,8 @@ body.game-started .player-color {
 /* ==================== GAME LOG SECTION ==================== */
 
 .game-log-section {
-    flex: 0 0 250px;
     width: 100%;
+    grid-column: 3;
 }
 
 .messages {
@@ -676,6 +712,8 @@ body.game-started .player-color {
     text-align: center;
     display: none;
     width: 100%;
+    min-height: 120px; /* Fixed height to prevent layout shifts */
+    box-sizing: border-box;
 }
 
 .review-header {
@@ -979,6 +1017,7 @@ body.timer-active .black-timer {
     }
     
     .game-container {
+        display: flex;
         flex-direction: column;
         gap: 15px;
     }
@@ -1039,6 +1078,7 @@ body.timer-active .black-timer {
         width: 100%;
         max-width: 100%;
         margin: 5px 0;
+        min-height: auto; /* Allow height to adjust on mobile */
     }
     
     .messages {
@@ -1047,6 +1087,7 @@ body.timer-active .black-timer {
     
     .game-log-section {
         margin-left: 0;
+        width: 100%;
     }
 }
 
@@ -1178,5 +1219,155 @@ body.timer-active .black-timer {
     
     .controls-sidebar {
         gap: 10px;
+    }
+}
+
+/* ==================== GLOWING LOGO STYLES ==================== */
+
+.electric-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.letter {
+    font-family: 'Arial', sans-serif;
+    font-weight: 100; /* Much thinner font weight */
+    font-size: 4.5rem; /* Slightly larger to maintain visibility */
+    text-transform: uppercase;
+    color: #a0dfff; /* More whitish-blue color */
+    position: relative;
+    display: inline-block;
+    margin: 0 3px;
+    text-shadow: 
+      0 0 10px rgba(160, 223, 255, 1),
+      0 0 20px rgba(160, 223, 255, 0.8),
+      0 0 30px rgba(160, 223, 255, 0.6),
+      0 0 40px rgba(160, 223, 255, 0.4);
+    letter-spacing: 0.05em; /* Add some letter spacing */
+}
+
+/* Electric spikes for each letter */
+.letter::before, 
+.letter::after {
+    content: '';
+    position: absolute;
+    background-color: #a0dfff; /* Match the whitish-blue color */
+    opacity: 0.6;
+}
+
+/* F letter spikes */
+.letter.f::before {
+    width: 1px; /* Thinner spikes */
+    height: 15px;
+    top: -10px;
+    left: 15px;
+    transform: rotate(-30deg);
+}
+
+.letter.f::after {
+    width: 1px; /* Thinner spikes */
+    height: 15px;
+    top: 5px;
+    left: -5px;
+    transform: rotate(45deg);
+}
+
+/* L letter spikes */
+.letter.l::before {
+    width: 1px; /* Thinner spikes */
+    height: 15px;
+    top: 20px;
+    left: -5px;
+    transform: rotate(60deg);
+}
+
+.letter.l::after {
+    width: 1px; /* Thinner spikes */
+    height: 18px;
+    bottom: -5px;
+    right: 15px;
+    transform: rotate(-30deg);
+}
+
+/* U letter spikes */
+.letter.u::before {
+    width: 1px; /* Thinner spikes */
+    height: 18px;
+    top: 10px;
+    left: 5px;
+    transform: rotate(-45deg);
+}
+
+.letter.u::after {
+    width: 1px; /* Thinner spikes */
+    height: 15px;
+    bottom: -5px;
+    left: 20px;
+    transform: rotate(30deg);
+}
+
+/* X letter spikes */
+.letter.x::before {
+    width: 1px; /* Thinner spikes */
+    height: 18px;
+    top: -8px;
+    right: 15px;
+    transform: rotate(30deg);
+}
+
+.letter.x::after {
+    width: 1px; /* Thinner spikes */
+    height: 18px;
+    bottom: -8px;
+    right: 10px;
+    transform: rotate(-45deg);
+}
+
+/* Pulsing animation - slower (8s) */
+@keyframes pulse-logo {
+    0% {
+        text-shadow: 
+            0 0 7px rgba(160, 223, 255, 1),
+            0 0 14px rgba(160, 223, 255, 0.8),
+            0 0 21px rgba(160, 223, 255, 0.6),
+            0 0 28px rgba(160, 223, 255, 0.4);
+    }
+    50% {
+        text-shadow: 
+            0 0 14px rgba(160, 223, 255, 1),
+            0 0 28px rgba(160, 223, 255, 0.8),
+            0 0 42px rgba(160, 223, 255, 0.6),
+            0 0 56px rgba(160, 223, 255, 0.4);
+    }
+    100% {
+        text-shadow: 
+            0 0 7px rgba(160, 223, 255, 1),
+            0 0 14px rgba(160, 223, 255, 0.8),
+            0 0 21px rgba(160, 223, 255, 0.6),
+            0 0 28px rgba(160, 223, 255, 0.4);
+    }
+}
+
+.letter {
+    animation: pulse-logo 8s infinite; /* Renamed to avoid conflict */
+}
+
+/* Stagger animations for each letter */
+.letter.f { animation-delay: 0s; }
+.letter.l { animation-delay: 2s; }
+.letter.u { animation-delay: 4s; }
+.letter.x { animation-delay: 6s; }
+
+/* Responsive adjustments for logo */
+@media screen and (max-width: 768px) {
+    .letter {
+        font-size: 3.5rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .letter {
+        font-size: 3rem;
     }
 }

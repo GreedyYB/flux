@@ -1371,16 +1371,20 @@ function addGameLogEntry(position) {
     }
     
     // Show notification
-    function showNotification(message, duration = 3000) {
-        if (!notificationElement) return;
-        
-        notificationElement.textContent = message;
-        notificationElement.style.display = 'block';
-        
-        setTimeout(() => {
-            notificationElement.style.display = 'none';
-        }, duration);
-    }
+function showNotification(message, duration = 3000) {
+    if (!notificationElement) return;
+    
+    notificationElement.textContent = message;
+    notificationElement.style.visibility = 'visible';
+    notificationElement.style.opacity = '1';
+    notificationElement.style.pointerEvents = 'auto';
+    
+    setTimeout(() => {
+        notificationElement.style.visibility = 'hidden';
+        notificationElement.style.opacity = '0';
+        notificationElement.style.pointerEvents = 'none';
+    }, duration);
+}
     
     // Terminate the game
 function terminateGame() {
@@ -1508,7 +1512,10 @@ function resetGame() {
     if (gameOverBanner) gameOverBanner.style.display = 'none';
     
     // Hide review controls
-    if (reviewControlsElement) reviewControlsElement.style.display = 'none';
+if (reviewControlsElement) {
+    reviewControlsElement.style.visibility = 'hidden';
+    reviewControlsElement.style.opacity = '0';
+    reviewControlsElement.style.pointerEvents = 'none';
     
     // Show timer setup again
     if (timerSetupElement) timerSetupElement.style.display = 'flex';
@@ -1766,7 +1773,10 @@ if (startGameButton) {
         state.gameStarted = true;
         
         // Hide setup and show timers if needed
-        if (timerSetupElement) timerSetupElement.style.display = 'none';
+if (timerSetupElement) {
+    timerSetupElement.style.visibility = 'hidden';
+    timerSetupElement.style.opacity = '0';
+    timerSetupElement.style.pointerEvents = 'none';
         
         // Setup timers
         setupTimers();
