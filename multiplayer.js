@@ -1,496 +1,417 @@
-// multiplayer.js - Client-side multiplayer functionality
+// Multiplayer.js - Handles Socket.io connections and multiplayer game functionality
 
-// Initialize variables
-let socket;
-let gameId = null;  // Changed from roomCode to gameId
-let playerColor = null;
-let isMultiplayerMode = false;
-let isProcessingMove = false;
-
-// Initialize multiplayer connection
-function initializeMultiplayer() {
-    // Connect to the server with explicit URL
-    const serverUrl = window.location.origin;
-    console.log("Connecting to server at:", serverUrl);
-    socket = io(serverUrl);
+// Define the multiplayer functionality in a self-contained object
+const multiplayer = {
+    socket: null,
+    gameId: null,
+    playerColor: null,
+    isWaiting: false,
+    isActive: false,
     
-    // Add connection status logging
-    socket.on('connect', () => {
-        console.log('Socket connected successfully, ID:', socket.id);
-    });
+    // Initialize the multiplayer connection
+initialize: function() {
+    // Connect to the server if not already connected
+    if (!this.socket) {
+        console.log("Connecting to socket.io server...");
+        this.socket = io();
+        this.setupEventListeners();
+    }
     
-    socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
-    });
+    // Join the multiplayer queue
+    this.joinMultiplayerQueue();
+},
     
-    // Setup all socket event listeners
-    setupSocketListeners();
-    
-    console.log('Multiplayer initialized');
-}
-
-// Set up Socket.io event listeners
-function setupSocketListeners() {
-    // Waiting for opponent event
-    socket.on('waitingForOpponent', () => {
-        console.log('Waiting for opponent...');
-        // UI already updated when the Find Game button is clicked
-    });
-    
-    // Game matched event
-socket.on('gameMatched', (data) => {
-    console.log("Game matched data received:", data);
-    
-    if (!data || !data.gameId) {
-        console.error("Invalid game data received:", data);
-        if (typeof window.showNotification === 'function') {
-            window.showNotification("Error starting game. Please try again.");
+       
+    // Initialize the multiplayer connection
+    initialize: function() {
+        // Connect to the server if not already connected
+        if (!this.socket) {
+            // Connect to the same host that served the page
+            this.socket = io();
+            this.setupEventListeners();
         }
-        return;
-    }
-    
-    console.log("Before setting playerColor:", playerColor);
-    gameId = data.gameId;
-    playerColor = data.playerColor;
-    console.log("After setting playerColor:", playerColor);
-    isMultiplayerMode = true;
-    
-    // Hide home screen
-    const homeScreen = document.getElementById('home-screen');
-    if (homeScreen) {
-        homeScreen.style.display = 'none';
-    }
-    
-    // Hide waiting indicator
-    const waitingIndicator = document.getElementById('waiting-indicator');
-    if (waitingIndicator) {
-        waitingIndicator.style.display = 'none';
-    }
-    
-    // Initialize game with server state
-    if (data.gameState) {
-        initializeGameWithServerState(data.gameState);
-    }
-    
-    // Show notification
-    if (typeof window.showNotification === 'function') {
-        window.showNotification('Opponent found! Game starting...');
-    }
-    
-    console.log(`Matched in game: ${gameId}, You are: ${playerColor}`);
-});
-    
-    // Game update event (new unified event for moves and state updates)
-    socket.on('gameUpdate', (data) => {
-        // Process the move animation
-        const move = data.move;
         
-        // If this is a move with vectors (creates a node), animate it
-        if (move && move.linesFormed > 0) {
-            animateVectorMove(move, () => {
-                // After animation completes, update the entire board state
-                updateGameWithServerState(data.gameState);
-                
-                // Check for game over
-                if (data.gameOver) {
-                    handleGameOver(data.winner);
+        // Join the multiplayer queue
+        this.joinMultiplayerQueue();
+    },
+    
+    // Set up all the Socket.io event listeners
+    setupEventListeners: function() {
+        if (!this.socket) return;
+        
+        // Waiting for opponent
+        this.socket.on('waitingForOpponent', () => {
+            this.isWaiting = true;
+            this.showWaitingScreen();
+        });
+        
+        // Game matched - both players found
+this.socket.on('gameMatched', (data) => {
+    this.isWaiting = false;
+    this.isActive = true;
+    this.gameId = data.gameId;
+    this.playerColor = data.playerColor;
+    
+    // Update the game state with the server's state
+    if (window.state && data.gameState) {
+        // Copy relevant properties from server state to client state
+        window.state.board = data.gameState.board;
+        window.state.currentPlayer = data.gameState.currentPlayer;
+        window.state.whiteScore = data.gameState.whiteScore;
+        window.state.blackScore = data.gameState.blackScore;
+        window.state.gameStarted = true;
+        window.state.moveCount = data.gameState.moveCount;
+        window.state.moveHistory = [];  // Start with empty history
+        
+        // Update the board display
+        if (typeof window.updateBoard === 'function') {
+            window.updateBoard();
+        }
+        
+        // Update scores
+        if (typeof window.updateScores === 'function') {
+            window.updateScores();
+        }
+        
+        // Hide waiting screen
+        this.hideWaitingScreen();
+        
+        // Show game started notification
+        if (typeof window.showNotification === 'function') {
+            window.showNotification(`Game started! You are playing as ${this.playerColor}`, 3000);
+        }
+        
+        // Add system message
+        if (typeof window.addSystemMessage === 'function') {
+            window.addSystemMessage(`Game started! You are playing as ${this.playerColor}`);
+        }
+        
+        // Add game-started class to body
+        document.body.classList.add('game-started');
+        
+        // Hide timer setup
+        const timerSetupElement = document.getElementById('timer-setup');
+        if (timerSetupElement) {
+            timerSetupElement.style.display = 'none';
+        }
+    }
+});
+        
+        // Game update after a move
+        this.socket.on('gameUpdate', (data) => {
+            if (!window.state) return;
+            
+            // Update game state
+            window.state.board = data.gameState.board;
+            window.state.currentPlayer = data.gameState.currentPlayer;
+            window.state.whiteScore = data.gameState.whiteScore;
+            window.state.blackScore = data.gameState.blackScore;
+            window.state.moveCount = data.gameState.moveCount;
+            window.state.lastMove = data.gameState.lastMove;
+            
+            // If the last move formed vectors, visualize them
+            if (data.move && data.move.vectors && data.move.vectors.length > 0 && typeof window.processVectorsSequentially === 'function') {
+                // Process the vectors with animations
+                window.processVectorsSequentially(data.move.vectors, data.move.row, data.move.col, data.move.linesFormed, () => {
+                    // After animations, update the board
+                    if (typeof window.updateBoard === 'function') {
+                        window.updateBoard();
+                    }
+                });
+            } else {
+                // No vectors, just update the board
+                if (typeof window.updateBoard === 'function') {
+                    window.updateBoard();
                 }
-            });
-        } else {
-            // Regular move - just update the state
-            updateGameWithServerState(data.gameState);
+            }
+            
+            // Add move to game log
+            if (data.move && typeof window.addGameLogEntry === 'function') {
+                const notation = data.move.linesFormed > 0 ? 
+                    `${data.move.notation}` : 
+                    data.move.notation;
+                window.addGameLogEntry(notation);
+            }
             
             // Check for game over
             if (data.gameOver) {
-                handleGameOver(data.winner);
+                window.state.gameOver = true;
+                
+                // Show game over message
+                if (typeof window.addSystemMessage === 'function') {
+                    const winner = data.winner.charAt(0).toUpperCase() + data.winner.slice(1);
+                    window.addSystemMessage(`Game Over! ${winner} wins!`);
+                }
+                
+                // Show game over banner
+                const gameOverBanner = document.getElementById('game-over-banner');
+                if (gameOverBanner) {
+                    const winner = data.winner.charAt(0).toUpperCase() + data.winner.slice(1);
+                    gameOverBanner.textContent = `Game Over! ${winner} wins!`;
+                    gameOverBanner.style.display = 'block';
+                }
+                
+                // Enable review mode
+                if (typeof window.enableReviewMode === 'function') {
+                    window.enableReviewMode();
+                }
             }
+        });
+        
+        // Game error
+        this.socket.on('gameError', (data) => {
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(data.message, 3000);
+            }
+        });
+        
+        // Opponent disconnected
+       this.socket.on('opponentDisconnected', (data) => {
+        this.isActive = false;
+        if (typeof window.addSystemMessage === 'function') {
+            const color = data.playerColor.charAt(0).toUpperCase() + data.playerColor.slice(1);
+            window.addSystemMessage(`${color} player disconnected. Game ended.`);
         }
+        
+        if (typeof window.showNotification === 'function') {
+            window.showNotification('Opponent disconnected. Game ended.', 3000);
+        }
+        
+        // Show game over banner
+        const gameOverBanner = document.getElementById('game-over-banner');
+        if (gameOverBanner) {
+            gameOverBanner.textContent = 'Game Over! Opponent disconnected.';
+            gameOverBanner.style.display = 'block';
+        }
+        
+        window.state.gameOver = true;
     });
     
     // Game error
-    socket.on('gameError', (data) => {
+    this.socket.on('gameError', (data) => {
         if (typeof window.showNotification === 'function') {
-            window.showNotification(`Error: ${data.message}`);
+            window.showNotification(data.message, 3000);
         }
-        console.error('Game error:', data.message);
-        
-        // Reset processing flag
-        isProcessingMove = false;
     });
     
-    // Room error
-    socket.on('roomError', (data) => {
+    // Game termination
+    this.socket.on('gameTerminated', (data) => {
+        this.isActive = false;
+        window.state.gameOver = true;
+        
+        // Get player info with proper capitalization
+        const terminatingColor = data.terminatingPlayer.charAt(0).toUpperCase() + data.terminatingPlayer.slice(1);
+        const winnerColor = data.winner.charAt(0).toUpperCase() + data.winner.slice(1);
+        
+        // Create message
+        const message = `${terminatingColor} terminated the game. ${winnerColor} wins!`;
+        
+        // Show message in game log
+        if (typeof window.addSystemMessage === 'function') {
+            window.addSystemMessage(message);
+        }
+        
+        // Show notification
         if (typeof window.showNotification === 'function') {
-            window.showNotification(`Error: ${data.message}`);
+            window.showNotification(message, 3000);
         }
-        console.error('Room error:', data.message);
-    });
-    
-    // Opponent disconnected
-    socket.on('opponentDisconnected', (data) => {
-        const opponentColor = data && data.playerColor ? data.playerColor : 
-                             (playerColor === 'white' ? 'black' : 'white');
         
+        // Show game over banner
+        const gameOverBanner = document.getElementById('game-over-banner');
+        if (gameOverBanner) {
+            gameOverBanner.textContent = `Game Over! ${message}`;
+            gameOverBanner.style.display = 'block';
+        }
+        
+        // Enable review mode
+        if (typeof window.enableReviewMode === 'function') {
+            window.enableReviewMode();
+        }
+    });
+},
+
+// Join the multiplayer queue to find an opponent
+joinMultiplayerQueue: function() {
+    if (!this.socket) return;
+    
+    this.socket.emit('joinMultiplayerQueue');
+    this.isWaiting = true;
+    this.showWaitingScreen();
+},
+
+// Cancel waiting in the queue
+cancelWaiting: function() {
+    if (!this.socket || !this.isWaiting) return;
+    
+    this.socket.emit('cancelWaiting');
+    this.isWaiting = false;
+    this.hideWaitingScreen();
+},
+
+// Make a move in the multiplayer game
+makeMove: function(row, col) {
+    if (!this.socket || !this.isActive || !this.gameId) return;
+    
+    // Don't allow moves if it's not the player's turn
+    if (window.state && window.state.currentPlayer !== this.playerColor) {
         if (typeof window.showNotification === 'function') {
-            window.showNotification(`${capitalize(opponentColor)} player disconnected`);
+            window.showNotification("Not your turn", 2000);
         }
-        
-        handleOpponentDisconnect();
-    });
-}
-
-// Handle opponent disconnect
-function handleOpponentDisconnect() {
-    // Show message in game log
-    if (typeof window.addSystemMessage === 'function') {
-        window.addSystemMessage("Opponent disconnected. Game ended.");
-    }
-    
-    // Optional: Show a button to return to home screen
-    const messagesContent = document.getElementById('messages-content');
-    if (messagesContent) {
-        const disconnectMsg = document.createElement('div');
-        disconnectMsg.className = 'message-entry';
-        disconnectMsg.innerHTML = '<button id="return-home" style="margin-top: 10px;">Return to Home</button>';
-        messagesContent.appendChild(disconnectMsg);
-        
-        document.getElementById('return-home').addEventListener('click', () => {
-            resetLocalGame();
-            showHomeScreen();
-        });
-    }
-}
-
-// Join the matchmaking queue
-function joinMatchmaking() {
-    if (socket) {
-        socket.emit('joinMultiplayerQueue');
-    } else {
-        console.error('Socket not initialized');
-    }
-}
-
-// Make a move in multiplayer game
-function makeMultiplayerMove(row, col) {
-    if (!isMultiplayerMode || !socket || !gameId) return false;
-    
-    // Prevent multiple rapid moves
-    if (isProcessingMove) return false;
-    isProcessingMove = true;
-    
-    // Send the move to the server
-    socket.emit('makeMove', { gameId, row, col });
-    
-    // Return true to indicate the move was sent
-    // The server will validate it and send back a response
-    return true;
-}
-
-// Initialize the game with a server state
-function initializeGameWithServerState(gameState) {
-    console.log("playerColor before resetLocalGame:", playerColor);
-    
-    // Save multiplayer state
-    const savedPlayerColor = playerColor;
-    const savedGameId = gameId;
-    
-    // First reset the local game
-    resetLocalGame();
-    
-    // Restore multiplayer state
-    playerColor = savedPlayerColor;
-    gameId = savedGameId;
-    isMultiplayerMode = true;
-    
-    console.log("playerColor after resetLocalGame (restored):", playerColor);
-    
-    // Then update with the server state
-    updateGameWithServerState(gameState);
-    
-    console.log("playerColor after updateGameWithServerState:", playerColor);
-}
-
-// Update the game with server state
-function updateGameWithServerState(gameState) {
-    if (!gameState || !window.state) return;
-    
-    // Update the board
-    window.state.board = gameState.board;
-    
-    // Update other state properties
-    window.state.currentPlayer = gameState.currentPlayer;
-    window.state.whiteScore = gameState.whiteScore;
-    window.state.blackScore = gameState.blackScore;
-    window.state.moveCount = gameState.moveCount;
-    window.state.lastMove = gameState.lastMove;
-    window.state.gameOver = gameState.gameOver;
-    window.state.gameStarted = gameState.gameStarted || (gameState.moveCount > 0);
-    
-    // Update game started class
-    if (window.state.gameStarted) {
-        document.body.classList.add('game-started');
-        
-        // Hide timer setup if visible
-        const timerSetup = document.querySelector('#timer-setup');
-        if (timerSetup && timerSetup.style.display !== 'none') {
-            timerSetup.style.display = 'none';
-        }
-    }
-    
-    // Update the board display
-    if (typeof window.updateBoard === 'function') {
-        window.updateBoard();
-    }
-    
-    // Update scores
-    if (typeof window.updateScores === 'function') {
-        window.updateScores();
-    }
-    
-    // Update turn indicators
-    updateTurnIndicators();
-    
-    // Reset processing flag
-    isProcessingMove = false;
-}
-
-// Reset the local game state
-function resetLocalGame() {
-    if (typeof window.resetGame === 'function') {
-        window.resetGame();
-    }
-}
-
-// Animate a vector move (when a node is created)
-function animateVectorMove(move, callback) {
-    if (!move || !window.state) {
-        if (callback) callback();
         return;
     }
     
-    // Place the piece first
-    if (typeof window.placeIon === 'function') {
-        window.placeIon(move.row, move.col, move.playerColor);
-    } else {
-        // Fallback
-        window.state.board[move.row][move.col] = {
-            color: move.playerColor,
-            protectionLevel: move.linesFormed > 0 ? move.linesFormed : 0
-        };
-    }
+    // Send the move to the server
+    this.socket.emit('makeMove', {
+        gameId: this.gameId,
+        row: row,
+        col: col
+    });
+},
+
+// Terminate the multiplayer game
+terminateGame: function() {
+    if (!this.socket || !this.isActive || !this.gameId) return;
     
-    // If there are vectors to animate
-    if (move.linesFormed > 0 && move.vectors && move.vectors.length > 0) {
-        // Use the client's vector animation if available
-        if (typeof window.processVectorsSequentially === 'function') {
-            window.processVectorsSequentially(
-                move.vectors, 
-                move.row, 
-                move.col, 
-                move.linesFormed, 
-                callback
-            );
+    // Send terminate event to server
+    this.socket.emit('terminateGame', {
+        gameId: this.gameId
+    });
+},
+    
+    // Create a simple waiting screen overlay
+    showWaitingScreen: function() {
+        let waitingScreen = document.getElementById('waiting-screen');
+        
+        if (!waitingScreen) {
+            waitingScreen = document.createElement('div');
+            waitingScreen.id = 'waiting-screen';
+            waitingScreen.style.position = 'fixed';
+            waitingScreen.style.top = '0';
+            waitingScreen.style.left = '0';
+            waitingScreen.style.width = '100%';
+            waitingScreen.style.height = '100%';
+            waitingScreen.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            waitingScreen.style.display = 'flex';
+            waitingScreen.style.flexDirection = 'column';
+            waitingScreen.style.alignItems = 'center';
+            waitingScreen.style.justifyContent = 'center';
+            waitingScreen.style.zIndex = '1000';
+            waitingScreen.style.color = 'white';
+            waitingScreen.style.fontSize = '24px';
+            
+            const waitingMessage = document.createElement('div');
+            waitingMessage.textContent = 'Waiting for opponent...';
+            waitingMessage.style.marginBottom = '20px';
+            
+            const spinner = document.createElement('div');
+            spinner.style.border = '5px solid rgba(255,255,255,0.3)';
+            spinner.style.borderTop = '5px solid white';
+            spinner.style.borderRadius = '50%';
+            spinner.style.width = '50px';
+            spinner.style.height = '50px';
+            spinner.style.animation = 'spin 1s linear infinite';
+            
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'Cancel';
+            cancelButton.style.marginTop = '20px';
+            cancelButton.style.padding = '10px 20px';
+            cancelButton.style.border = 'none';
+            cancelButton.style.borderRadius = '5px';
+            cancelButton.style.backgroundColor = '#e74c3c';
+            cancelButton.style.color = 'white';
+            cancelButton.style.cursor = 'pointer';
+            
+            cancelButton.addEventListener('click', () => {
+                this.cancelWaiting();
+            });
+            
+            // Add keyframes for spinner animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            waitingScreen.appendChild(waitingMessage);
+            waitingScreen.appendChild(spinner);
+            waitingScreen.appendChild(cancelButton);
+            
+            document.body.appendChild(waitingScreen);
         } else {
-            // No animation support, just call the callback
-            if (callback) callback();
+            waitingScreen.style.display = 'flex';
         }
-    } else {
-        // No vectors, just call the callback
-        if (callback) callback();
-    }
-}
-
-// Handle game over
-function handleGameOver(winner) {
-    if (!window.state) return;
+    },
     
-    // Set game over flag
-    window.state.gameOver = true;
-    
-    // Show game over message
-    const winnerName = capitalize(winner);
-    const message = `Game Over! ${winnerName} wins!`;
-    
-    // Add system message
-    if (typeof window.addSystemMessage === 'function') {
-        window.addSystemMessage(message);
-    }
-    
-    // Show banner
-    const gameOverBanner = document.getElementById('game-over-banner');
-    if (gameOverBanner) {
-        gameOverBanner.textContent = message;
-        gameOverBanner.style.display = 'block';
-    }
-    
-    // Enable review mode if available
-    if (typeof window.enableReviewMode === 'function') {
-        window.enableReviewMode();
-    }
-}
-
-// Update turn indicators based on current player
-function updateTurnIndicators() {
-    if (!window.state) return;
-    
-    // Remove active player class from both scores
-    document.querySelector('.white-score').classList.remove('active-player');
-    document.querySelector('.black-score').classList.remove('active-player');
-    
-    // Add active player class to current player's score
-    const activeScoreClass = window.state.currentPlayer === 'white' ? '.white-score' : '.black-score';
-    document.querySelector(activeScoreClass).classList.add('active-player');
-    
-    // Show turn notification
-    if (window.state.currentPlayer === playerColor) {
-        if (typeof window.showNotification === 'function') {
-            window.showNotification("Your turn");
+    // Hide the waiting screen
+    hideWaitingScreen: function() {
+        const waitingScreen = document.getElementById('waiting-screen');
+        if (waitingScreen) {
+            waitingScreen.style.display = 'none';
         }
-    } else {
-        if (typeof window.showNotification === 'function') {
-            window.showNotification("Opponent's turn");
-        }
-    }
-}
+    },
+    
+    // Check if multiplayer mode is active
+    isMultiplayerActive: function() {
+        return this.isActive;
+    },
+    
+    // Emit a game event to the server (for various updates)
+emitGameEvent: function(eventName, data) {
+    if (!this.socket || !this.isActive || !this.gameId) return;
+    
+    // Add gameId to the data
+    const eventData = {
+        ...data,
+        gameId: this.gameId
+    };
+    
+    this.socket.emit(eventName, eventData);
+},
 
-// Helper function to capitalize first letter
-function capitalize(str) {
-    if (!str) return '';
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// UI Helper functions
-function showRoomCode(code) {
-    console.log("Showing room code:", code);
+// Leave the current game and notify the opponent
+leaveGame: function() {
+    if (!this.socket || !this.isActive || !this.gameId) return;
     
-    // Create or update room code display
-    let codeDisplay = document.getElementById('room-code-display');
-    
-    if (!codeDisplay) {
-        codeDisplay = document.createElement('div');
-        codeDisplay.id = 'room-code-display';
-        codeDisplay.className = 'room-code';
-        document.querySelector('.header-area').appendChild(codeDisplay);
-    }
-    
-    codeDisplay.innerHTML = `<span>Room Code:</span> <strong>${code || 'None'}</strong>`;
-    codeDisplay.style.display = 'block';
-}
-
-function showWaitingMessage() {
-    // Show waiting for opponent message
-    let waitingMsg = document.getElementById('waiting-message');
-    
-    if (!waitingMsg) {
-        waitingMsg = document.createElement('div');
-        waitingMsg.id = 'waiting-message';
-        waitingMsg.className = 'waiting-message';
-        waitingMsg.innerHTML = 'Waiting for opponent to join...';
-        document.querySelector('.header-area').appendChild(waitingMsg);
-    }
-    
-    waitingMsg.style.display = 'block';
-}
-
-function hideWaitingMessage() {
-    const waitingMsg = document.getElementById('waiting-message');
-    if (waitingMsg) {
-        waitingMsg.style.display = 'none';
-    }
-}
-
-function showHomeScreen() {
-    // Hide game elements
-    document.body.classList.remove('game-started');
-    
-    // Show home screen
-    let homeScreen = document.getElementById('home-screen');
-    if (!homeScreen) {
-        // Create home screen if it doesn't exist
-        createHomeScreenUI();
-    } else {
-        homeScreen.style.display = 'block';
-    }
-    
-    // Hide multiplayer elements
-    const roomCodeDisplay = document.getElementById('room-code-display');
-    if (roomCodeDisplay) roomCodeDisplay.style.display = 'none';
-    
-    hideWaitingMessage();
+    // Send leave game event to server
+    this.socket.emit('leaveGame', {
+        gameId: this.gameId
+    });
     
     // Reset multiplayer state
-    isMultiplayerMode = false;
-    roomCode = null;
-    playerColor = null;
-}
+    this.isActive = false;
+    this.gameId = null;
+},
 
-// This function will be called from the HTML UI
-function createHomeScreenUI() {
-    // Create home screen container
-    const homeScreen = document.createElement('div');
-    homeScreen.id = 'home-screen';
-    homeScreen.className = 'home-screen';
+// Play again after a game has ended
+playAgain: function() {
+    // Reset all multiplayer state
+    this.isActive = false;
+    this.gameId = null;
     
-    // Create content for simple matchmaking
-    homeScreen.innerHTML = `
-        <h2>Flux - Multiplayer Mode</h2>
-        <div class="home-buttons">
-            <button id="find-game-btn" class="home-button">Find Game</button>
-            <button id="back-to-game-btn" class="home-button">Back to Single Player</button>
-        </div>
-        <div id="waiting-indicator" style="display: none; margin-top: 20px; text-align: center;">
-            <p>Waiting for an opponent...</p>
-            <div class="loading-spinner"></div>
-            <button id="cancel-wait-btn" class="home-button" style="margin-top: 10px;">Cancel</button>
-        </div>
-    `;
-    
-    // Add to the document
-    document.body.insertBefore(homeScreen, document.querySelector('.header-area'));
-    
-    // Add event listeners
-    document.getElementById('find-game-btn').addEventListener('click', () => {
-        // Show waiting indicator
-        document.getElementById('waiting-indicator').style.display = 'block';
-        document.getElementById('find-game-btn').style.display = 'none';
+    // If socket exists, rejoin the queue
+    if (this.socket) {
+        // Reset the game state
+        if (window.resetGame && typeof window.resetGame === 'function') {
+            window.resetGame();
+        }
         
-        // Join the matchmaking queue
-        if (socket) {
-            socket.emit('joinMultiplayerQueue');
-        } else {
-            console.error('Socket not initialized');
-            if (typeof window.showNotification === 'function') {
-                window.showNotification('Connection error. Please try again.');
-            }
+        // Hide any game over messages
+        const gameOverBanner = document.getElementById('game-over-banner');
+        if (gameOverBanner) {
+            gameOverBanner.style.display = 'none';
         }
-    });
-    
-    document.getElementById('cancel-wait-btn').addEventListener('click', () => {
-        // Hide waiting indicator
-        document.getElementById('waiting-indicator').style.display = 'none';
-        document.getElementById('find-game-btn').style.display = 'block';
         
-        // Cancel waiting
-        if (socket) {
-            socket.emit('cancelWaiting');
-        }
-    });
-    
-    document.getElementById('back-to-game-btn').addEventListener('click', () => {
-        isMultiplayerMode = false;
-        homeScreen.style.display = 'none';
-        const timerSetup = document.querySelector('#timer-setup');
-        if (timerSetup) {
-            timerSetup.style.display = 'flex';
-        }
-    });
+        // Join the multiplayer queue again
+        this.joinMultiplayerQueue();
+    } else {
+        // If socket doesn't exist, reinitialize
+        this.initialize();
+    }
 }
-
-// Export functions for use in flux.js
-window.multiplayer = {
-    initialize: initializeMultiplayer,
-    joinMatchmaking: joinMatchmaking,
-    makeMove: makeMultiplayerMove,
-    showHomeScreen: showHomeScreen,
-    isMultiplayerActive: () => isMultiplayerMode
 };
+
+// Export the multiplayer object to the window scope so other scripts can access it
+window.multiplayer = multiplayer;

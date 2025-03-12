@@ -23,7 +23,7 @@ h2 {
 .game-container {
     display: flex;
     justify-content: center;
-    gap: 50px;
+    gap: 30px;
     align-items: flex-start;
     width: 100%;
     max-width: 100%;
@@ -41,7 +41,7 @@ h2 {
     align-items: center; /* Vertically center everything */
 }
 
-.game-info, #timer-setup {
+.game-info {
     position: absolute;
     top: 0;
     left: 0;
@@ -184,27 +184,24 @@ body.game-started.ai-mode #core-avatar {
 .timer-setup {
     background-color: #2a2a4a;
     border-radius: 5px;
-    padding: 8px 12px;
+    padding: 12px;
     margin-bottom: 15px;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    width: auto;
-    max-width: 435px;
-    margin-left: auto;
-    margin-right: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .timer-option-row {
     display: flex;
     align-items: center;
-    margin: 0 5px;
+    width: 100%;
+    margin-bottom: 8px;
 }
 
 .timer-option {
-    margin: 0 5px;
+    margin: 0 5px 5px 0;
     display: flex;
     align-items: center;
     white-space: nowrap;
@@ -227,8 +224,9 @@ select {
     border-radius: 5px;
     padding: 8px 15px;
     cursor: pointer;
-    margin: 0 5px;
+    margin-top: 8px;
     font-weight: bold;
+    width: 100%;
 }
 
 .timer-button:hover {
@@ -238,7 +236,7 @@ select {
 /* ==================== BOARD LAYOUT ==================== */
 
 .board-container {
-    width: 450px; /* Fixed width to accommodate the board + padding + row labels */
+    width: 600px; /* Increased from 450px to 600px for larger board */
     margin: 0 auto 20px;
     display: flex;
     flex-direction: column;
@@ -267,7 +265,7 @@ select {
 }
 
 .row-label {
-    height: 50px;
+    height: 65px; /* Match cell height */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -278,9 +276,9 @@ select {
 
 .column-labels {
     display: grid;
-    grid-template-columns: repeat(8, 50px); /* Match the grid cell size */
-    gap: 2px; /* Match the board gap */
-    width: 410px; /* 8 columns × 50px + 7 gaps × 2px */
+    grid-template-columns: repeat(8, 65px); /* Match cell width */
+    gap: 3px; /* Match the board gap */
+    width: 534px; /* 8 columns × 65px + 7 gaps × 3px */
     margin-left: 35px; /* Match row labels width + margin */
     padding: 5px; /* Match the board padding */
     box-sizing: border-box;
@@ -294,11 +292,11 @@ select {
 
 .board {
     display: grid;
-    grid-template-columns: repeat(8, 50px);
-    grid-template-rows: repeat(8, 50px);
-    gap: 2px;
+    grid-template-columns: repeat(8, 65px); /* Increased from 50px */
+    grid-template-rows: repeat(8, 65px);    /* Increased from 50px */
+    gap: 3px;  /* Slightly larger gap */
     background-color: #34495e;
-    padding: 5px;
+    padding: 6px;
     border-radius: 5px;
     position: relative;
     margin: 0;
@@ -307,8 +305,8 @@ select {
 }
 
 .cell {
-    width: 50px;
-    height: 50px;
+    width: 65px;  /* Match the grid template size */
+    height: 65px;
     background-color: #4a6c8f;
     display: flex;
     justify-content: center;
@@ -333,8 +331,8 @@ select {
 }
 
 .ion {
-    width: 40px;
-    height: 40px;
+    width: 55px;  /* Increased from 40px */
+    height: 55px;
     border-radius: 50%;
     position: absolute;
     top: 5px;
@@ -410,25 +408,36 @@ select {
 
 /* ==================== CONTROLS SECTION ==================== */
 
-.controls {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    text-align: center;
+/* Controls sidebar */
+.controls-sidebar {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    gap: 15px;
+    width: 200px;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    margin-bottom: 10px;
+}
+
+.controls button {
+    width: 100%;
+    padding: 12px 10px;
+    margin: 0;
+    font-weight: 600;
+    transition: all 0.3s;
 }
 
 button {
-    padding: 12px 20px;
     background-color: #3498db;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin: 0 10px;
-    font-weight: 600;
-    transition: all 0.3s;
 }
 
 button:hover {
@@ -445,35 +454,29 @@ button:hover {
 
 /* Game mode and AI difficulty selectors */
 .game-mode, .ai-difficulty {
-    margin-top: 10px;
     background-color: #2a2a4a;
     padding: 10px;
     border-radius: 5px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 350px; /* Reduced width */
-    margin-left: auto;
-    margin-right: auto;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin: 0 0 10px 0;
 }
 
 /* Player Color Selection */
 .player-color {
-    margin-top: 10px;
     background-color: #2a2a4a;
     padding: 10px;
     border-radius: 5px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 350px;
-    margin-left: auto;
-    margin-right: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
 }
 
 .player-color label {
-    margin-right: 10px;
+    margin-bottom: 8px;
     font-weight: bold;
     color: #fff;
 }
@@ -483,6 +486,7 @@ button:hover {
     background-color: #1a1a2e;
     border-radius: 4px;
     overflow: hidden;
+    width: 100%;
 }
 
 .color-toggle input[type="radio"] {
@@ -495,6 +499,8 @@ button:hover {
     transition: background-color 0.3s;
     font-weight: normal;
     margin: 0;
+    flex: 1;
+    text-align: center;
 }
 
 .color-toggle input[type="radio"]:checked + label {
@@ -529,9 +535,14 @@ body.game-started .player-color {
 }
 
 .game-mode label, .ai-difficulty label {
-    margin-right: 10px;
+    margin-bottom: 8px;
     font-weight: bold;
     color: #fff;
+    display: block;
+}
+
+.game-mode select, .ai-difficulty select {
+    width: 100%;
 }
 
 /* ==================== GAME LOG SECTION ==================== */
@@ -539,7 +550,6 @@ body.game-started .player-color {
 .game-log-section {
     flex: 0 0 250px;
     width: 100%;
-    margin-left: 20px;
 }
 
 .messages {
@@ -548,7 +558,7 @@ body.game-started .player-color {
     border-radius: 10px;
     font-family: monospace;
     line-height: 1.5;
-    height: 426px;
+    height: 585px; /* Match the board height */
     overflow-y: auto;
 }
 
@@ -661,14 +671,11 @@ body.game-started .player-color {
 
 .review-controls {
     background-color: #2a2a4a;
-    padding: 15px;
+    padding: 12px;
     border-radius: 5px;
-    margin-top: 15px;
     text-align: center;
     display: none;
-    max-width: 435px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
 }
 
 .review-header {
@@ -679,8 +686,8 @@ body.game-started .player-color {
 
 .review-buttons {
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 5px;
     margin-bottom: 10px;
 }
 
@@ -692,6 +699,7 @@ body.game-started .player-color {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0;
 }
 
 .review-info {
@@ -1006,10 +1014,31 @@ body.timer-active .black-timer {
         left: 10%;
     }
     
+    .controls-sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        order: -1; /* Place controls at the top on mobile */
+    }
+    
+    .controls {
+        flex-direction: row;
+        justify-content: center;
+        width: 100%;
+    }
+    
     .controls button {
         padding: 8px 12px;
         margin: 5px;
         font-size: 0.9rem;
+        width: auto;
+    }
+    
+    .timer-setup, .game-mode, .player-color, .ai-difficulty, .review-controls {
+        width: 100%;
+        max-width: 100%;
+        margin: 5px 0;
     }
     
     .messages {
@@ -1078,17 +1107,76 @@ body.timer-active .black-timer {
     }
 }
 
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top: 4px solid #3498db;
-    animation: spin 1s linear infinite;
-    margin: 20px auto;
+/* If screen is very tall, add even more space to the board */
+@media screen and (min-height: 1000px) {
+    .board-container {
+        width: 680px;
+    }
+    
+    .board {
+        grid-template-columns: repeat(8, 75px);
+        grid-template-rows: repeat(8, 75px);
+    }
+    
+    .cell {
+        width: 75px;
+        height: 75px;
+    }
+    
+    .ion {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .row-label {
+        height: 75px;
+    }
+    
+    .column-labels {
+        grid-template-columns: repeat(8, 75px);
+        width: 615px; /* 8 columns × 75px + 7 gaps × 3px */
+    }
+    
+    .messages {
+        height: 670px;
+    }
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+/* Adjust for smaller desktop screens */
+@media screen and (max-height: 800px) {
+    .board-container {
+        width: 520px;
+    }
+    
+    .board {
+        grid-template-columns: repeat(8, 58px);
+        grid-template-rows: repeat(8, 58px);
+    }
+    
+    .cell {
+        width: 58px;
+        height: 58px;
+    }
+    
+    .ion {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .row-label {
+        height: 58px;
+    }
+    
+    .column-labels {
+        grid-template-columns: repeat(8, 58px);
+        width: 478px; /* 8 columns × 58px + 7 gaps × 3px */
+    }
+    
+    .messages {
+        height: 520px;
+    }
+    
+    .controls-sidebar {
+        gap: 10px;
+    }
 }

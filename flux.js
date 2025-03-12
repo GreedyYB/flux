@@ -1383,41 +1383,53 @@ function addGameLogEntry(position) {
     }
     
     // Terminate the game
-    function terminateGame() {
-        if (state.gameOver) {
-            showNotification("The game is already over.");
-            return;
-        }
-        
-        state.gameOver = true;
-        
-        // Stop timer if enabled
-        if (timerState.enabled && timerState.running) {
-            pauseTimer();
-        }
-        
-        const terminatingPlayer = state.currentPlayer;
-        const winner = terminatingPlayer === 'white' ? 'Black' : 'White';
-        
-        // Show message
-        addSystemMessage(`${terminatingPlayer.charAt(0).toUpperCase() + terminatingPlayer.slice(1)} terminates. ${winner} wins!`);
-        
-        // Show banner
-        if (gameOverBanner) {
-            gameOverBanner.textContent = `Game Over: ${terminatingPlayer.charAt(0).toUpperCase() + terminatingPlayer.slice(1)} terminates. ${winner} wins!`;
-            gameOverBanner.style.display = 'block';
-        }
-        
-        // Show review controls
-        enableReviewMode();
-        
-        // Update CORE status if white terminated (black wins)
-        if (terminatingPlayer === 'white') {
-            updateCoreGameState('game-over-win');
-        } else {
-            updateCoreGameState('game-over-loss');
+function terminateGame() {
+    if (state.gameOver) {
+        showNotification("The game is already over.");
+        return;
+    }
+    
+    state.gameOver = true;
+    
+    // Stop timer if enabled
+    if (timerState.enabled && timerState.running) {
+        pauseTimer();
+    }
+    
+    // Check if this is a multiplayer game
+    const isMultiplayerActive = window.multiplayer && typeof window.multiplayer.isMultiplayerActive === 'function' && 
+        window.multiplayer.isMultiplayerActive();
+    
+    if (isMultiplayerActive) {
+        // For multiplayer, call the terminateGame function
+        if (window.multiplayer && typeof window.multiplayer.terminateGame === 'function') {
+            window.multiplayer.terminateGame();
+            return; // Let the server handle the rest
         }
     }
+    
+    const terminatingPlayer = state.currentPlayer;
+    const winner = terminatingPlayer === 'white' ? 'Black' : 'White';
+    
+    // Show message
+    addSystemMessage(`${terminatingPlayer.charAt(0).toUpperCase() + terminatingPlayer.slice(1)} terminates. ${winner} wins!`);
+    
+    // Show banner
+    if (gameOverBanner) {
+        gameOverBanner.textContent = `Game Over: ${terminatingPlayer.charAt(0).toUpperCase() + terminatingPlayer.slice(1)} terminates. ${winner} wins!`;
+        gameOverBanner.style.display = 'block';
+    }
+    
+    // Show review controls
+    enableReviewMode();
+    
+    // Update CORE status if white terminated (black wins)
+    if (terminatingPlayer === 'white') {
+        updateCoreGameState('game-over-win');
+    } else {
+        updateCoreGameState('game-over-loss');
+    }
+}
     
     // Reset the game
 function resetGame() {
@@ -1426,6 +1438,11 @@ function resetGame() {
         window.multiplayer.isMultiplayerActive();
     
     if (isMultiplayerActive) {
+        // Notify the server that this player is leaving the game
+        if (window.multiplayer && typeof window.multiplayer.leaveGame === 'function') {
+            window.multiplayer.leaveGame();
+        }
+        
         // For multiplayer, show the home screen instead of just resetting
         if (window.multiplayer && typeof window.multiplayer.showHomeScreen === 'function') {
             window.multiplayer.showHomeScreen();
@@ -1528,22 +1545,55 @@ function resetGame() {
 }
     
     // Review mode functions
-    function enableReviewMode() {
-        state.reviewMode = true;
-        if (reviewControlsElement) reviewControlsElement.style.display = 'block';
+function enableReviewMode() {
+    state.reviewMode = true;
+    if (reviewControlsElement) reviewControlsElement.style.display = 'block';
+    
+    // Set the current review move to the end of the game
+    state.currentReviewMove = state.moveHistory.length;
+    updateReviewMoveCounter();
+    
+    // Add click events to all move entries
+    document.querySelectorAll('.message-entry[data-move]').forEach(entry => {
+        entry.style.cursor = 'pointer';
+    });
+    
+    // Highlight the current position (end of game)
+    highlightCurrentMove();
+    
+    // Add play again button for multiplayer games
+    const isMultiplayerActive = window.multiplayer && typeof window.multiplayer.isMultiplayerActive === 'function' && 
+        window.multiplayer.isMultiplayerActive();
+    
+    if (isMultiplayerActive) {
+        // Check if play again button already exists
+        let playAgainButton = document.getElementById('play-again-btn');
         
-        // Set the current review move to the end of the game
-        state.currentReviewMove = state.moveHistory.length;
-        updateReviewMoveCounter();
-        
-        // Add click events to all move entries
-        document.querySelectorAll('.message-entry[data-move]').forEach(entry => {
-            entry.style.cursor = 'pointer';
-        });
-        
-        // Highlight the current position (end of game)
-        highlightCurrentMove();
+        if (!playAgainButton) {
+            // Create play again button
+            playAgainButton = document.createElement('button');
+            playAgainButton.id = 'play-again-btn';
+            playAgainButton.textContent = 'Play Again';
+            playAgainButton.style.backgroundColor = '#27ae60';
+            playAgainButton.style.marginTop = '10px';
+            
+            // Add click event
+            playAgainButton.addEventListener('click', function() {
+                if (window.multiplayer && typeof window.multiplayer.playAgain === 'function') {
+                    window.multiplayer.playAgain();
+                }
+            });
+            
+            // Add to review controls
+            if (reviewControlsElement) {
+                reviewControlsElement.appendChild(playAgainButton);
+            }
+        } else {
+            // If button exists, just show it
+            playAgainButton.style.display = 'block';
+        }
     }
+}
     
     function goToMove(moveNumber) {
         // Clear any nexus highlights first

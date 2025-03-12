@@ -391,49 +391,122 @@ io.on('connection', (socket) => {
     });
     
     // Handle a player's move
-socket.on('makeMove', (data) => {
-    const { gameId, row, col } = data;
-    
-    // Validate the game
-    if (!activeGames[gameId]) {
-        socket.emit('gameError', { message: 'Game not found' });
-        return;
-    }
-    
-    // Get the game state
-    const gameState = activeGames[gameId];
-    
-    // Find the player in the game
-    const playerIndex = gameState.players.findIndex(p => p.id === socket.id);
-    
-    if (playerIndex === -1) {
-        socket.emit('gameError', { message: 'You are not in this game' });
-        return;
-    }
-    
-    const playerColor = gameState.players[playerIndex].color;
-    
-    // Validate it's the player's turn
-    if (playerColor !== gameState.currentPlayer) {
-        socket.emit('gameError', { message: 'Not your turn' });
-        return;
-    }
-    
-    // Process the move on the server
-    const result = processMove(gameState, row, col, playerColor);
-    
-    if (!result.valid) {
-        socket.emit('gameError', { message: result.message });
-        return;
-    }
-    
-    // Send the updated game state to all players
-    io.to(gameId).emit('gameUpdate', {
-        move: result.move,
-        gameState: gameState,
-        gameOver: result.gameOver,
-        winner: result.winner
+    socket.on('makeMove', (data) => {
+        const { gameId, row, col } = data;
+        
+        // Validate the game
+        if (!activeGames[gameId]) {
+            socket.emit('gameError', { message: 'Game not found' });
+            return;
+        }
+        
+        // Get the game state
+        const gameState = activeGames[gameId];
+        
+        // Find the player in the game
+        const playerIndex = gameState.players.findIndex(p => p.id === socket.id);
+        
+        if (playerIndex === -1) {
+            socket.emit('gameError', { message: 'You are not in this game' });
+            return;
+        }
+        
+        const playerColor = gameState.players[playerIndex].color;
+        
+        // Validate it's the player's turn
+        if (playerColor !== gameState.currentPlayer) {
+            socket.emit('gameError', { message: 'Not your turn' });
+            return;
+        }
+        
+        // Process the move on the server
+        const result = processMove(gameState, row, col, playerColor);
+        
+        if (!result.valid) {
+            socket.emit('gameError', { message: result.message });
+            return;
+        }
+        
+        // Send the updated game state to all players
+        io.to(gameId).emit('gameUpdate', {
+            move: result.move,
+            gameState: gameState,
+            gameOver: result.gameOver,
+            winner: result.winner
+        });
     });
+
+    // Handle player terminating the game
+    socket.on('terminateGame', (data) => {
+        const { gameId } = data;
+        
+        // Validate the game
+        if (!activeGames[gameId]) {
+            socket.emit('gameError', { message: 'Game not found' });
+            return;
+        }
+        
+        // Get the game state
+        const gameState = activeGames[gameId];
+        
+        // Find the player in the game
+        const playerIndex = gameState.players.findIndex(p => p.id === socket.id);
+        
+        if (playerIndex === -1) {
+            socket.emit('gameError', { message: 'You are not in this game' });
+            return;
+        }
+        
+        // Get player color
+        const playerColor = gameState.players[playerIndex].color;
+        
+        // Mark game as over
+        gameState.gameOver = true;
+        
+        // Winner is the opposite player
+        const winner = playerColor === 'white' ? 'black' : 'white';
+        
+        // Notify both players
+        io.to(gameId).emit('gameTerminated', {
+            terminatingPlayer: playerColor,
+            winner: winner
+        });
+        
+        console.log(`Game ${gameId} terminated by player ${playerColor}`);
+    });
+
+    // Handle player leaving the game intentionally
+    socket.on('leaveGame', (data) => {
+        const { gameId } = data;
+        
+        // Validate the game
+        if (!activeGames[gameId]) {
+            return;
+        }
+        
+        // Get the game state
+        const gameState = activeGames[gameId];
+        
+        // Find the player in the game
+        const playerIndex = gameState.players.findIndex(p => p.id === socket.id);
+        
+        if (playerIndex === -1) {
+            return;
+        }
+        
+        // Get player color
+        const playerColor = gameState.players[playerIndex].color;
+        
+        // Notify other player
+        for (const player of gameState.players) {
+            if (player.id !== socket.id) {
+                io.to(player.id).emit('opponentDisconnected', { playerColor });
+            }
+        }
+        
+        // Remove the game
+        delete activeGames[gameId];
+        console.log(`Game ${gameId} ended due to player ${playerColor} leaving`);
     });
     
     // Handle player disconnection
