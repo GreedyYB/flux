@@ -98,65 +98,95 @@ this.socket.on('gameMatched', (data) => {
 });
         
         // Game update after a move
-        this.socket.on('gameUpdate', (data) => {
-            if (!window.state) return;
-            
-            // Update game state
-            window.state.board = data.gameState.board;
-            window.state.currentPlayer = data.gameState.currentPlayer;
-            window.state.whiteScore = data.gameState.whiteScore;
-            window.state.blackScore = data.gameState.blackScore;
-            window.state.moveCount = data.gameState.moveCount;
-            window.state.lastMove = data.gameState.lastMove;
-            
-            // If the last move formed vectors, visualize them
-            if (data.move && data.move.vectors && data.move.vectors.length > 0 && typeof window.processVectorsSequentially === 'function') {
-                // Process the vectors with animations
-                window.processVectorsSequentially(data.move.vectors, data.move.row, data.move.col, data.move.linesFormed, () => {
-                    // After animations, update the board
-                    if (typeof window.updateBoard === 'function') {
-                        window.updateBoard();
-                    }
-                });
-            } else {
-                // No vectors, just update the board
-                if (typeof window.updateBoard === 'function') {
-                    window.updateBoard();
-                }
-            }
-            
-            // Add move to game log
-            if (data.move && typeof window.addGameLogEntry === 'function') {
-                const notation = data.move.linesFormed > 0 ? 
-                    `${data.move.notation}` : 
-                    data.move.notation;
-                window.addGameLogEntry(notation);
-            }
-            
-            // Check for game over
-            if (data.gameOver) {
-                window.state.gameOver = true;
-                
-                // Show game over message
-                if (typeof window.addSystemMessage === 'function') {
-                    const winner = data.winner.charAt(0).toUpperCase() + data.winner.slice(1);
-                    window.addSystemMessage(`Game Over! ${winner} wins!`);
-                }
-                
-                // Show game over banner
-                const gameOverBanner = document.getElementById('game-over-banner');
-                if (gameOverBanner) {
-                    const winner = data.winner.charAt(0).toUpperCase() + data.winner.slice(1);
-                    gameOverBanner.textContent = `Game Over! ${winner} wins!`;
-                    gameOverBanner.style.display = 'block';
-                }
-                
-                // Enable review mode
-                if (typeof window.enableReviewMode === 'function') {
-                    window.enableReviewMode();
-                }
+this.socket.on('gameUpdate', (data) => {
+    if (!window.state) return;
+    
+    // Save the current board state before updating it
+    const currentBoard = JSON.parse(JSON.stringify(window.state.board));
+    const prevPlayer = window.state.currentPlayer;
+    const prevWhiteScore = window.state.whiteScore;
+    const prevBlackScore = window.state.blackScore;
+    const prevMoveCount = window.state.moveCount;
+    
+    // Update game state
+    window.state.board = data.gameState.board;
+    window.state.currentPlayer = data.gameState.currentPlayer;
+    window.state.whiteScore = data.gameState.whiteScore;
+    window.state.blackScore = data.gameState.blackScore;
+    window.state.moveCount = data.gameState.moveCount;
+    window.state.lastMove = data.gameState.lastMove;
+    
+    // Add to move history if this is a new move
+    if (data.move && data.move.playerColor) {
+        // Create a history entry if it doesn't exist
+        if (!window.state.moveHistory) {
+            window.state.moveHistory = [];
+        }
+        
+        // Save the board state and game state for this move
+        window.state.moveHistory.push({
+            board: currentBoard,
+            currentPlayer: prevPlayer,
+            whiteScore: prevWhiteScore,
+            blackScore: prevBlackScore,
+            moveCount: prevMoveCount,
+            lastMove: { row: data.move.row, col: data.move.col }
+        });
+        
+        console.log("Added move to history. Total moves:", window.state.moveHistory.length);
+    }
+    
+    // If the last move formed vectors, visualize them
+    if (data.move && data.move.vectors && data.move.vectors.length > 0 && typeof window.processVectorsSequentially === 'function') {
+        // Process the vectors with animations
+        window.processVectorsSequentially(data.move.vectors, data.move.row, data.move.col, data.move.linesFormed, () => {
+            // After animations, update the board
+            if (typeof window.updateBoard === 'function') {
+                window.updateBoard();
             }
         });
+    } else {
+        // No vectors, just update the board
+        if (typeof window.updateBoard === 'function') {
+            window.updateBoard();
+        }
+    }
+    
+    // Add move to game log
+    if (data.move && typeof window.addGameLogEntry === 'function') {
+        const notation = data.move.linesFormed > 0 ? 
+            `${data.move.notation}` : 
+            data.move.notation;
+        window.addGameLogEntry(notation);
+    }
+    
+    // Check for game over
+    if (data.gameOver) {
+        window.state.gameOver = true;
+        
+        // Save final board state for review mode
+        window.state.finalBoardState = JSON.parse(JSON.stringify(window.state.board));
+        
+        // Show game over message
+        if (typeof window.addSystemMessage === 'function') {
+            const winner = data.winner.charAt(0).toUpperCase() + data.winner.slice(1);
+            window.addSystemMessage(`Game Over! ${winner} wins!`);
+        }
+        
+        // Show game over banner
+        const gameOverBanner = document.getElementById('game-over-banner');
+        if (gameOverBanner) {
+            const winner = data.winner.charAt(0).toUpperCase() + data.winner.slice(1);
+            gameOverBanner.textContent = `Game Over! ${winner} wins!`;
+            gameOverBanner.style.display = 'block';
+        }
+        
+        // Enable review mode
+        if (typeof window.enableReviewMode === 'function') {
+            window.enableReviewMode();
+        }
+    }
+});
         
         // Game error
         this.socket.on('gameError', (data) => {
