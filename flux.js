@@ -1773,10 +1773,11 @@ if (startGameButton) {
         state.gameStarted = true;
         
         // Hide setup and show timers if needed
-if (timerSetupElement) {
-    timerSetupElement.style.visibility = 'hidden';
-    timerSetupElement.style.opacity = '0';
-    timerSetupElement.style.pointerEvents = 'none';
+        if (timerSetupElement) {
+            timerSetupElement.style.visibility = 'hidden';
+            timerSetupElement.style.opacity = '0';
+            timerSetupElement.style.pointerEvents = 'none';
+        }
         
         // Setup timers
         setupTimers();
@@ -1805,23 +1806,32 @@ if (timerSetupElement) {
                 updateCoreStatus('Thinking...');
                 
                 // Random delay to simulate thinking
-                const thinkingDelay = 3000 + Math.floor(Math.random() * 2000);
+                const thinkingDelay = 1500 + Math.floor(Math.random() * 1500);
                 
                 setTimeout(() => {
                     try {
                         // AI is playing as white for the first move
-                        const move = getAIMove(state.board, 'white', difficulty);
-                        updateCoreStatus('Move found');
-                        
-                        setTimeout(() => {
-                            if (move) {
-                                handleCellClick(move.row, move.col);
-                                setTimeout(() => {
+                        if (window.getAIMove && typeof window.getAIMove === 'function') {
+                            const move = window.getAIMove(state.board, 'white', difficulty);
+                            updateCoreStatus('Move found');
+                            
+                            setTimeout(() => {
+                                if (move && move.row !== undefined && move.col !== undefined) {
+                                    handleCellClick(move.row, move.col);
+                                    setTimeout(() => {
+                                        updateCoreStatus('Waiting');
+                                    }, 1000);
+                                } else {
+                                    console.error("AI returned invalid move:", move);
+                                    state.pendingAIMove = false;
                                     updateCoreStatus('Waiting');
-                                }, 1000);
-                            }
+                                }
+                            }, 800);
+                        } else {
+                            console.error("getAIMove function not found");
                             state.pendingAIMove = false;
-                        }, 800);
+                            updateCoreStatus('Waiting');
+                        }
                     } catch (error) {
                         console.error("Error in AI's first move:", error);
                         state.pendingAIMove = false;
