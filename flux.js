@@ -1,7 +1,6 @@
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function() {
     // Game state
-    // Game state
     const state = {
         currentPlayer: 'white',
         board: Array(8).fill().map(() => Array(8).fill(null)),
@@ -11,14 +10,14 @@ document.addEventListener('DOMContentLoaded', function() {
         lastMove: null,
         moveCount: 0,
         gameStarted: false,
-        // Review mode properties
         reviewMode: false,
-        moveHistory: [], // Will store board states and other information
+        moveHistory: [],
         currentReviewMove: 0,
         nexusPositions: null,
         finalBoardState: null,
-        pendingAIMove: false  // Add this line for AI playing first when player is black
+        pendingAIMove: false
     };
+
 
     // Timer state
     const timerState = {
@@ -1805,22 +1804,27 @@ if (startGameButton) {
                 const difficulty = parseInt(document.getElementById('ai-difficulty').value);
                 updateCoreStatus('Thinking...');
                 
-                // Random delay to simulate thinking
-                const thinkingDelay = 1500 + Math.floor(Math.random() * 1500);
+                // Random delay to simulate thinking - keeping the 3-5 second range
+                const thinkingDelay = 3000 + Math.floor(Math.random() * 2000);
                 
                 setTimeout(() => {
                     try {
                         // AI is playing as white for the first move
-                        if (window.getAIMove && typeof window.getAIMove === 'function') {
-                            const move = window.getAIMove(state.board, 'white', difficulty);
+                        const aiModule = window.getAIMove || window.ai || (window.AI && window.AI.getAIMove);
+                        
+                        if (typeof aiModule === 'function') {
+                            const move = aiModule(state.board, 'white', difficulty);
                             updateCoreStatus('Move found');
                             
                             setTimeout(() => {
                                 if (move && move.row !== undefined && move.col !== undefined) {
-                                    handleCellClick(move.row, move.col);
-                                    setTimeout(() => {
-                                        updateCoreStatus('Waiting');
-                                    }, 1000);
+                                    // Check if game hasn't ended before making the move
+                                    if (!state.gameOver) {
+                                        handleCellClick(move.row, move.col);
+                                        setTimeout(() => {
+                                            updateCoreStatus('Waiting');
+                                        }, 1000);
+                                    }
                                 } else {
                                     console.error("AI returned invalid move:", move);
                                     state.pendingAIMove = false;
@@ -1828,9 +1832,36 @@ if (startGameButton) {
                                 }
                             }, 800);
                         } else {
-                            console.error("getAIMove function not found");
-                            state.pendingAIMove = false;
-                            updateCoreStatus('Waiting');
+                            // Try to find the getAIMove function from imported ai.js
+                            console.log("Looking for AI module in various places");
+                            
+                            // Check if the function is defined directly in the ai.js script
+                            if (typeof getAIMove === 'function') {
+                                const move = getAIMove(state.board, 'white', difficulty);
+                                updateCoreStatus('Move found');
+                                
+                                setTimeout(() => {
+                                    if (move && move.row !== undefined && move.col !== undefined) {
+                                        if (!state.gameOver) {
+                                            handleCellClick(move.row, move.col);
+                                            setTimeout(() => {
+                                                updateCoreStatus('Waiting');
+                                            }, 1000);
+                                        }
+                                    } else {
+                                        console.error("AI returned invalid move:", move);
+                                        state.pendingAIMove = false;
+                                        updateCoreStatus('Waiting');
+                                    }
+                                }, 800);
+                            } else {
+                                console.error("Could not find getAIMove function");
+                                state.pendingAIMove = false;
+                                updateCoreStatus('Waiting');
+                                
+                                // Show a notification to the user
+                                showNotification("AI module not loaded properly. Please refresh the page.", 5000);
+                            }
                         }
                     } catch (error) {
                         console.error("Error in AI's first move:", error);
@@ -2154,19 +2185,6 @@ window.placeIon = placeIon;
 window.checkForLines = checkForLines;
 window.saveCurrentStateToHistory = saveCurrentStateToHistory;
 window.addGameLogEntry = addGameLogEntry;
-window.state = state;
-window.resetGame = resetGame;
-window.handleCellClick = handleCellClick;
-window.placeIon = placeIon;
-window.updateBoard = updateBoard;
-window.updateScores = updateScores;
-window.showNotification = showNotification;
-window.addSystemMessage = addSystemMessage;
-window.switchToNextPlayer = switchToNextPlayer;
-window.checkForLines = checkForLines;
-window.saveCurrentStateToHistory = saveCurrentStateToHistory;
-window.addGameLogEntry = addGameLogEntry;
 window.processVectorsSequentially = processVectorsSequentially;
 window.enableReviewMode = enableReviewMode;
-
 }); // End of DOMContentLoaded event handler

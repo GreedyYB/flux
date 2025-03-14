@@ -20,21 +20,7 @@ initialize: function() {
     // Join the multiplayer queue
     this.joinMultiplayerQueue();
 },
-    
-       
-    // Initialize the multiplayer connection
-    initialize: function() {
-        // Connect to the server if not already connected
-        if (!this.socket) {
-            // Connect to the same host that served the page
-            this.socket = io();
-            this.setupEventListeners();
-        }
         
-        // Join the multiplayer queue
-        this.joinMultiplayerQueue();
-    },
-    
     // Set up all the Socket.io event listeners
     setupEventListeners: function() {
         if (!this.socket) return;
