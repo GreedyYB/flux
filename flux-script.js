@@ -191,12 +191,29 @@ function initializeGame() {
 // Create the game board
 function createBoard() {
     gameBoard.innerHTML = '';
+    const colLetters = 'ABCDEFGH';
+    const rowNumbers = '87654321';
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
             cell.dataset.row = row;
             cell.dataset.col = col;
+
+            // Add number label (top-left) for first column
+            if (col === 0) {
+                const numLabel = document.createElement('span');
+                numLabel.className = 'cell-label cell-label-num';
+                numLabel.textContent = rowNumbers[row];
+                cell.appendChild(numLabel);
+            }
+            // Add letter label (bottom-right) for bottom row
+            if (row === 7) {
+                const letLabel = document.createElement('span');
+                letLabel.className = 'cell-label cell-label-let';
+                letLabel.textContent = colLetters[col];
+                cell.appendChild(letLabel);
+            }
             gameBoard.appendChild(cell);
         }
     }
@@ -366,23 +383,30 @@ function setupReviewControls() {
 function updateGameMode() {
     const gameModeSelect = document.getElementById('game-mode-select');
     const selectedMode = gameModeSelect.value;
-    
-    // Set AI opponent based on selection
-    if (selectedMode.startsWith('ai')) {
-        gameState.aiOpponent = true;
-        
-        // Set AI level based on the selection
-        if (selectedMode === 'ai-1') {
-            gameState.aiLevel = 1;
-        } else if (selectedMode === 'ai-2') {
-            gameState.aiLevel = 2;
-        } else { // ai-3
-            gameState.aiLevel = 3;
-        }
-    } else {
+
+    // Multiplayer mode
+    if (selectedMode === 'multiplayer') {
         gameState.aiOpponent = false;
+        isMultiplayer = true;
+        // Optionally, clear any previous AI or local game state
+        // Hide CORE avatar if present
+        if (coreAvatar && coreAvatar.hide) coreAvatar.hide();
+    } else {
+        isMultiplayer = false;
+        // Set AI opponent based on selection
+        if (selectedMode.startsWith('ai')) {
+            gameState.aiOpponent = true;
+            if (selectedMode === 'ai-1') {
+                gameState.aiLevel = 1;
+            } else if (selectedMode === 'ai-2') {
+                gameState.aiLevel = 2;
+            } else {
+                gameState.aiLevel = 3;
+            }
+        } else {
+            gameState.aiOpponent = false;
+        }
     }
-    
     // Always set the start button text to just "Start"
     startBtn.textContent = 'Start';
 }

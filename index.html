@@ -23,29 +23,7 @@
             </div>
             
             <div class="board-with-labels">
-                <div class="row-labels">
-                    <div>8</div>
-                    <div>7</div>
-                    <div>6</div>
-                    <div>5</div>
-                    <div>4</div>
-                    <div>3</div>
-                    <div>2</div>
-                    <div>1</div>
-                </div>
-                <div>
-                    <div class="board" id="game-board"></div>
-                    <div class="column-labels">
-                        <div>A</div>
-                        <div>B</div>
-                        <div>C</div>
-                        <div>D</div>
-                        <div>E</div>
-                        <div>F</div>
-                        <div>G</div>
-                        <div>H</div>
-                    </div>
-                </div>
+                <div class="board" id="game-board"></div>
             </div>
             <div class="player-info bottom">
                 <div class="player" id="player-black">
@@ -71,10 +49,11 @@
                     <div class="option-row">
                         <label for="game-mode-select">Opponent:</label>
                         <select id="game-mode-select" class="control-select">
-                            <option value="human">Human</option>
-                            <option value="ai-1">CORE AI-1</option>
-                            <option value="ai-2">CORE AI-2</option>
-                            <option value="ai-3">CORE AI-3</option>
+                            <option value="human">Human vs Human</option>
+                            <option value="ai-1">AI Level 1</option>
+                            <option value="ai-2">AI Level 2</option>
+                            <option value="ai-3">AI Level 3</option>
+                            <option value="multiplayer">Multiplayer</option>
                         </select>
                     </div>
                     
@@ -297,10 +276,11 @@
         </div>
     </div>
 
-    <!-- Multiplayer Room Join UI -->
-    <div id="multiplayer-controls" style="margin-bottom: 1em;">
+    <!-- Multiplayer controls, hidden by default -->
+    <div id="multiplayer-controls" style="margin-bottom: 1em; display: none;">
         <input type="text" id="room-input" placeholder="Room code" style="padding: 0.5em;" />
         <button onclick="joinMultiplayerRoom(document.getElementById('room-input').value)">Join Room</button>
+        <div id="multiplayer-helper" style="font-size: 0.9em; color: #666; margin-top: 0.5em;">Share a room code with your friend and both join the same room to play online.</div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -308,5 +288,25 @@
     <script src="sounds.js"></script>
     <script src="tutorial-demos.js"></script>
     <script src="tutorial.js"></script>
+    <script>
+    // Show/hide multiplayer controls based on dropdown
+    const gameModeSelect = document.getElementById('game-mode-select');
+    const multiplayerControls = document.getElementById('multiplayer-controls');
+    if (gameModeSelect && multiplayerControls) {
+        gameModeSelect.addEventListener('change', function() {
+            if (this.value === 'multiplayer') {
+                multiplayerControls.style.display = 'block';
+            } else {
+                multiplayerControls.style.display = 'none';
+            }
+        });
+        // On page load, ensure correct visibility
+        if (gameModeSelect.value === 'multiplayer') {
+            multiplayerControls.style.display = 'block';
+        } else {
+            multiplayerControls.style.display = 'none';
+        }
+    }
+    </script>
 </body>
 </html>

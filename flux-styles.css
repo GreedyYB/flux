@@ -1639,3 +1639,27 @@ input:checked + .slider:before {
         inset 0 2px 5px rgba(255, 255, 255, 0.3),
         0 0 15px rgba(102, 102, 102, 0.3);
 }
+
+/* Board cell labels for numbers and letters inside cells */
+.cell-label {
+    position: absolute;
+    font-size: 0.7em;
+    color: #888;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    font-family: inherit;
+}
+.cell-label-num {
+    top: 2px;
+    left: 4px;
+}
+.cell-label-let {
+    bottom: 2px;
+    right: 4px;
+}
+
+/* Ensure .cell is position: relative for label positioning */
+.cell {
+    position: relative;
+}
