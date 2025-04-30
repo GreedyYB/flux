@@ -297,6 +297,13 @@
         </div>
     </div>
 
+    <!-- Multiplayer Room Join UI -->
+    <div id="multiplayer-controls" style="margin-bottom: 1em;">
+        <input type="text" id="room-input" placeholder="Room code" style="padding: 0.5em;" />
+        <button onclick="joinMultiplayerRoom(document.getElementById('room-input').value)">Join Room</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
     <script src="flux-script.js"></script>
     <script src="sounds.js"></script>
     <script src="tutorial-demos.js"></script>

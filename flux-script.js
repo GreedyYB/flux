@@ -4653,3 +4653,73 @@ updateBoard = function() {
         coreAvatar.updateBreathingState();
     }
 };
+
+// --- Multiplayer Setup ---
+let socket = null;
+let roomId = null;
+let playerNumber = null;
+let isMultiplayer = false;
+
+function joinMultiplayerRoom(room) {
+    if (!room) {
+        showToast('Please enter a room code.', 2000);
+        return;
+    }
+    isMultiplayer = true;
+    roomId = room;
+    socket = io();
+
+    socket.emit('joinRoom', roomId);
+
+    socket.on('playerNumber', (num) => {
+        playerNumber = num;
+        showToast(`You are Player ${num}`, 2000);
+    });
+
+    socket.on('playerJoined', (num) => {
+        showToast(`Player ${num} joined the room!`, 2000);
+    });
+
+    socket.on('opponentMove', (move) => {
+        // Only process if it's not your turn
+        const myColor = playerNumber === 1 ? 'white' : 'black';
+        if (gameState.currentPlayer !== myColor) {
+            // Prevent recursion: only process if the move is not already on the board
+            if (gameState.board[move.row][move.col] === null) {
+                _originalHandleCellClick(move.row, move.col);
+            }
+        }
+    });
+
+    socket.on('playerLeft', () => {
+        showToast('Opponent left the game.', 3000);
+    });
+}
+window.joinMultiplayerRoom = joinMultiplayerRoom;
+
+// Patch handleCellClick for multiplayer only if not already patched
+if (!window._multiplayerPatched) {
+    window._multiplayerPatched = true;
+    // Save the original handleCellClick
+    const _originalHandleCellClick = handleCellClick;
+    handleCellClick = function(row, col) {
+        if (isMultiplayer && playerNumber) {
+            const myColor = playerNumber === 1 ? 'white' : 'black';
+            if (gameState.currentPlayer !== myColor) {
+                showToast('Wait for your turn!', 1500);
+                return;
+            }
+        }
+        // Call the original logic
+        const result = _originalHandleCellClick.apply(this, arguments);
+        // After a successful move, emit to server if multiplayer
+        if (isMultiplayer && socket && roomId) {
+            socket.emit('move', {
+                roomId: roomId,
+                move: { row, col }
+            });
+        }
+        return result;
+    };
+}
+// ... existing code ...
