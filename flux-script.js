@@ -4660,6 +4660,9 @@ let roomId = null;
 let playerNumber = null;
 let isMultiplayer = false;
 
+// Save the original handleCellClick so it's available everywhere
+let _originalHandleCellClick = handleCellClick;
+
 function joinMultiplayerRoom(room) {
     if (!room) {
         showToast('Please enter a room code.', 2000);
@@ -4681,10 +4684,8 @@ function joinMultiplayerRoom(room) {
     });
 
     socket.on('opponentMove', (move) => {
-        // Only process if it's not your turn
         const myColor = playerNumber === 1 ? 'white' : 'black';
         if (gameState.currentPlayer !== myColor) {
-            // Prevent recursion: only process if the move is not already on the board
             if (gameState.board[move.row][move.col] === null) {
                 _originalHandleCellClick(move.row, move.col);
             }
@@ -4697,11 +4698,8 @@ function joinMultiplayerRoom(room) {
 }
 window.joinMultiplayerRoom = joinMultiplayerRoom;
 
-// Patch handleCellClick for multiplayer only if not already patched
 if (!window._multiplayerPatched) {
     window._multiplayerPatched = true;
-    // Save the original handleCellClick
-    const _originalHandleCellClick = handleCellClick;
     handleCellClick = function(row, col) {
         if (isMultiplayer && playerNumber) {
             const myColor = playerNumber === 1 ? 'white' : 'black';
