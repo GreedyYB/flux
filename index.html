@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flux - Strategic Board Game</title>
+    <link rel="stylesheet" href="flux-styles.css">
+</head>
+<body>
+    <header>
+        <h1>Flux</h1>
+    </header>
+    
+    <div class="game-container">
+        <div class="game-board-area">
+            <div class="player-info">
+                <div class="player active" id="player-white">
+                    <div class="player-color white"></div>
+                    <span>White</span>
+                    <span>Nodes: <span id="white-score">0</span></span>
+                </div>
+                <div class="player-timer" id="white-timer">10:00</div>
+            </div>
+            
+            <div class="board-with-labels">
+                <div class="row-labels">
+                    <div>8</div>
+                    <div>7</div>
+                    <div>6</div>
+                    <div>5</div>
+                    <div>4</div>
+                    <div>3</div>
+                    <div>2</div>
+                    <div>1</div>
+                </div>
+                <div>
+                    <div class="board" id="game-board"></div>
+                    <div class="column-labels">
+                        <div>A</div>
+                        <div>B</div>
+                        <div>C</div>
+                        <div>D</div>
+                        <div>E</div>
+                        <div>F</div>
+                        <div>G</div>
+                        <div>H</div>
+                    </div>
+                </div>
+            </div>
+            <div class="player-info bottom">
+                <div class="player" id="player-black">
+                    <div class="player-color black"></div>
+                    <span>Black</span>
+                    <span>Nodes: <span id="black-score">0</span></span>
+                </div>
+                <div class="player-timer" id="black-timer">10:00</div>
+            </div>
+        </div>
+        
+        <div class="game-controls-area">
+            <div class="controls">
+                <!-- Button row - always in same position -->
+                <div class="main-buttons">
+                    <button class="btn action-btn" id="start-btn">Start</button>
+                    <button class="btn action-btn" id="resign-btn" style="display: none;">Resign</button>
+                    <button class="btn action-btn" id="reset-btn">Reset</button>
+                </div>
+                
+                <!-- Pre-game controls (visible before game starts) -->
+                <div id="pregame-controls">
+                    <div class="option-row">
+                        <label for="game-mode-select">Opponent:</label>
+                        <select id="game-mode-select" class="control-select">
+                            <option value="human">Human</option>
+                            <option value="ai-1">CORE AI-1</option>
+                            <option value="ai-2">CORE AI-2</option>
+                            <option value="ai-3">CORE AI-3</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-row">
+                        <label for="timer-toggle">Game Timer:</label>
+                        <div class="toggle-container">
+                            <span class="toggle-label">Off</span>
+                            <label class="toggle small">
+                                <input type="checkbox" id="timer-toggle" checked>
+                                <span class="slider round"></span>
+                            </label>
+                            <span class="toggle-label active">On</span>
+                        </div>
+                    </div>
+                    
+                    <div class="timer-settings" id="timer-settings">
+                        <div class="timer-row">
+                            <div class="option-cell">
+                                <label for="minutes-per-player">Minutes:</label>
+                                <select id="minutes-per-player" class="control-select">
+                                    <option value="60">60</option>
+                                    <option value="30">30</option>
+                                    <option value="15">15</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="5">5</option>
+                                    <option value="3">3</option>
+                                </select>
+                            </div>
+                            <div class="option-cell">
+                                <label for="increment-seconds">Increment:</label>
+                                <select id="increment-seconds" class="control-select">
+                                    <option value="10">10 sec</option>
+                                    <option value="5">5 sec</option>
+                                    <option value="2">2 sec</option>
+                                    <option value="0" selected>0 sec</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- In-game controls (visible during gameplay) -->
+                <div id="ingame-controls" style="display: none;">
+                    <div id="core-avatar" class="core-avatar">
+                        <div class="core-orb"></div>
+                        <div class="core-dots">
+                            <div class="core-dot"></div>
+                            <div class="core-dot"></div>
+                            <div class="core-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="review-button-container">
+                    <h2>Game Log</h2>
+                    <button id="review-btn" class="review-button">Review</button>
+                </div>
+                <div class="game-log" id="game-log">
+                    <!-- Review controls moved inside the game log -->
+                    <div id="review-section" style="display: none;">
+                        <h3 style="margin-top: 15px;">Review Mode</h3>
+                        <div class="move-counter" id="move-counter">Move: 0 / 0</div>
+                        <div class="review-controls">
+                            <button class="btn" id="first-move-btn" title="First Move">&#171;</button>
+                            <button class="btn" id="prev-move-btn" title="Previous Move">&#8249;</button>
+                            <button class="btn" id="next-move-btn" title="Next Move">&#8250;</button>
+                            <button class="btn" id="last-move-btn" title="Last Move">&#187;</button>
+                            <button class="btn" id="exit-review-btn" title="Exit Review">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- New utility buttons container positioned below the game log -->
+            <div class="utility-buttons-container">
+                <div class="utility-buttons">
+                    <button class="btn" id="tutorial-btn">Tutorial</button>
+                    <button class="btn" id="rules-btn">Rules</button>
+                    <button class="btn" id="settings-btn">Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification rules-popup" id="rules-popup">
+        <h2>Flux Game Rules</h2>
+        
+        <h3>Overview</h3>
+        <p>Flux is a strategic board game played on an 8x8 grid between two players: White and Black. It involves placing pieces (called "Ions") and forming special patterns to create "Nodes" and ultimately a "Nexus" to win.</p>
+        
+        <h3>Core Rules</h3>
+        <ul>
+            <li>Players take turns placing Ions (white or black) on an 8×8 board.</li>
+            <li>White always moves first.</li>
+            <li>The goal is to form "Vectors" (unbroken lines of exactly 4 Ions of the same color) horizontally, vertically, or diagonally.</li>
+            <li>Players cannot form lines longer than 4 Ions of the same color.</li>
+            <li>When a Vector is formed, the last Ion placed becomes a "Node" (marked with a red indicator) that stays on the board permanently.</li>
+            <li>All other Ions in the Vector are removed from the board (except for existing Nodes).</li>
+        </ul>
+        
+        <h3>Node Values</h3>
+        <p>Creating multiple Vectors simultaneously creates more valuable Nodes:</p>
+        <ul>
+            <li>1 Vector = Standard Node (red dot)</li>
+            <li>2 Vectors at once = Double Node (red horizontal oval)</li>
+            <li>3 Vectors at once = Triple Node (red triangle)</li>
+            <li>4 Vectors at once = Quadruple Node (red diamond)</li>
+        </ul>
+        
+        <h3>Winning the Game</h3>
+        <ul>
+            <li>The main objective is to form a "Nexus" (a Vector of 4 Nodes) to win the game.</li>
+            <li>If no player can form a Nexus and no more legal moves are possible, the player with the most Nodes wins.</li>
+            <li>If both players have the same number of Nodes, the game is a draw.</li>
+        </ul>
+        
+        <h3>Game Features</h3>
+        <ul>
+            <li>Timer system with configurable time controls (minutes per player and increment)</li>
+            <li>Move notation and game log</li>
+            <li>Move review system to replay the game</li>
+            <li>Visual indicators for last move, Vectors, and winning Nexus</li>
+        </ul>
+        
+        <button class="btn" id="rules-close-btn">Close Rules</button>
+    </div>
+    
+    <!-- Tutorial Popup -->
+    <div id="tutorial-popup" class="tutorial-popup" style="display: none;">
+        <div id="tutorial-content">
+            <h2 id="tutorial-title"></h2>
+            <p id="tutorial-message"></p>
+            <div id="tutorial-demo"></div>
+        </div>
+        <div class="tutorial-navigation">
+            <button class="btn" id="tutorial-prev-btn">Previous</button>
+            <button class="btn" id="tutorial-next-btn">Next</button>
+            <button class="btn" id="tutorial-close-btn">Close</button>
+        </div>
+    </div>
+    
+    <!-- Game Notification Popup -->
+    <div id="notification" class="notification" style="display: none;">
+        <h2 id="notification-title"></h2>
+        <p id="notification-message"></p>
+        <div class="notification-buttons">
+            <button class="btn primary" id="notification-primary-btn"></button>
+            <button class="btn secondary" id="notification-secondary-btn"></button>
+            <button class="btn close" id="notification-close-btn">×</button>
+        </div>
+    </div>
+    
+    <div id="overlay" style="display: none;"></div>
+    <div class="toast" id="toast"></div>
+    
+    <!-- Settings Popup -->
+    <div id="settings-popup" class="notification settings-dialog" style="display: none;">
+        <h2>Settings</h2>
+        
+        <!-- Theme Selection -->
+        <div class="settings-section">
+            <h3>Theme</h3>
+            <select id="theme-select" class="control-select">
+                <option value="classic">Classic</option>
+                <option value="dark">Dark Mode</option>
+                <option value="high-contrast">High Contrast</option>
+                <option value="nature">Nature</option>
+                <option value="ocean">Ocean</option>
+                <option value="custom">Custom Colors</option>
+            </select>
+        </div>
+
+        <!-- Sound Settings -->
+        <div class="settings-section">
+            <h3>Sound</h3>
+            <div class="option-row">
+                <label for="sound-toggle">Game Sounds:</label>
+                <div class="toggle-container">
+                    <span class="toggle-label">Off</span>
+                    <label class="toggle small">
+                        <input type="checkbox" id="sound-toggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label active">On</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Custom Colors (initially hidden, shown when Custom theme is selected) -->
+        <div id="custom-colors" class="settings-section" style="display: none;">
+            <h3>Custom Colors</h3>
+            <div class="color-option">
+                <label for="white-ion-color">White Ion Color:</label>
+                <input type="color" id="white-ion-color" value="#ecf0f1">
+            </div>
+            <div class="color-option">
+                <label for="black-ion-color">Black Ion Color:</label>
+                <input type="color" id="black-ion-color" value="#2c3e50">
+            </div>
+            <div class="color-option">
+                <label for="node-color">Node Color:</label>
+                <input type="color" id="node-color" value="#e74c3c">
+            </div>
+            <div class="color-option">
+                <label for="board-color">Board Color:</label>
+                <input type="color" id="board-color" value="#d1e6f9">
+            </div>
+            <div class="color-option">
+                <label for="highlight-color">Move Highlight:</label>
+                <input type="color" id="highlight-color" value="#2ecc71">
+            </div>
+        </div>
+        
+        <div class="notification-buttons">
+            <button class="btn primary" id="settings-save-btn">Save Changes</button>
+            <button class="btn secondary" id="settings-reset-btn">Reset to Default</button>
+            <button class="btn" id="settings-close-btn">Close</button>
+        </div>
+    </div>
+
+    <script src="flux-script.js"></script>
+    <script src="sounds.js"></script>
+    <script src="tutorial-demos.js"></script>
+    <script src="tutorial.js"></script>
+</body>
+</html>
